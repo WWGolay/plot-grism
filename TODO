@@ -1,0 +1,20 @@
+General
+-Add github page url to setup.py
+
+Analysis
+-Add previewing and subimaging capability to images being analyzed (some targets will be in congested fields) - DONE PENDING TESTING
+    -Clean up how this works inside grism_analysis_lib (e.g. don't require reinitializing every time)
+-Fix variable listeners to deal with floats when an int should be the only type allowed
+-Add non-Balmer lines plotting capability
+-Change about button callback to go to github page
+-Add more coloroptions for image and strip image
+-2x2 plot should automatically search for a reference spectrum and the calibration file
+-Make the user select where the figure will be saved (but default to the directory of the image)
+-Fix wavelength entries to defaults when going back from custom to general, full spectrum selection
+
+Calibration
+-Allow starting a calibration without having selected any files, but ask on start
+-When going from wavelength to gain, ask if a new image would like to be used
+-When doing wavelength, ability to select which peaks are representative of balmer lines and which aren't
+
+-Long Term: Change to screen with 3 buttons, each opens a screen which asks for image, perform rotation/wv/gain, then once complete, go back to main screen and checkbox appears. Once all 3 steps are done, then you can choose to write the calibration file and preview the plots (e.g. 2x2)
