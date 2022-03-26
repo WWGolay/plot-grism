@@ -16,19 +16,15 @@ class grism_analysis:
         
         ''' Open image, extract header information '''
         im, hdr = getdata(grism_image, 0, header=True)
-        self.object    =  hdr['OBJECT']
-        self.utdate    =  hdr['DATE-OBS'][:-3].replace('T',' ')
-        self.jd        =  hdr['JD']
-        self.telescope =  hdr['TELESCOP']
+        self.object     = hdr['OBJECT']
+        self.utdate     = hdr['DATE-OBS'][:-3].replace('T',' ')
+        self.jd         = hdr['JD']
+        self.telescope  = hdr['TELESCOP']
         self.instrument = hdr['INSTRUME']
+        self.filter     = hdr['FILTER']
         
         # Flip image so L-> R corresponds to short -> long wavelength                     
         im = np.fliplr(im)
-        
-        # Crack filter codes
-        fil = hdr['FILTER'][0]
-        if fil == '8': self.filter = 'R'
-        if fil == '9': self.filter = 'B'
         
         # Create default plot title
         self.title = '%s\n%s %s grism: %s' % \

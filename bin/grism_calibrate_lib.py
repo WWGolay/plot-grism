@@ -20,18 +20,14 @@ class grism_calibrate:
         
         ''' Open image, extract header information '''
         im, hdr = getdata(grism_image, 0, header=True)
-        self.object    =  hdr['OBJECT']
-        self.utdate    =  hdr['DATE-OBS'][:-3].replace('T',' ')
-        self.telescope =  hdr['TELESCOP']
+        self.object     = hdr['OBJECT']
+        self.utdate     = hdr['DATE-OBS'][:-3].replace('T',' ')
+        self.telescope  = hdr['TELESCOP']
         self.instrument = hdr['INSTRUME']
+        self.filter     = hdr['FILTER']
         
         # Flip image so L-> R corresponds to short -> long wavelength                     
         im = np.fliplr(im)
-        
-        # Translate filter codes
-        fil = hdr['FILTER'][0]
-        if fil == '8': self.filter = 'R'
-        if fil == '9': self.filter = 'B'
         
         # Create default plot title
         self.title = '%s\n%s %s grism: %s' % \
@@ -43,7 +39,6 @@ class grism_calibrate:
         spec_ref /= np.max(spec_ref)
         
         self.image = im
-        self.filter = fil
         self.wave_ref = wave_ref
         self.spec_ref= spec_ref
         
