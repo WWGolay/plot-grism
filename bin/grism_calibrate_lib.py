@@ -1,5 +1,5 @@
 import numpy as np
-import ccdproc as ccdp
+#import ccdproc as ccdp
 from astropy.io.fits import getdata
 from scipy.ndimage.interpolation import rotate
 from statsmodels.nonparametric.smoothers_lowess import lowess
