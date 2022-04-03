@@ -6,7 +6,7 @@ last updated 2 Apr 2022 - WG
 
 '''
 from bin.grism_analysis_web import grism_web
-from bin.grism_analysis_lib import grism_analysis
+from bin.grism_tools_lib import grism_tools
 import os,glob
 from datetime import date, timedelta, datetime
 import astropy.io.fits as pyfits
@@ -37,7 +37,7 @@ def main():
     with open("temp.fts", "wb") as binary_file: # Write fits image to file so it can be analyzed
         binary_file.write(fits_image['content'])
     
-    grism_analyzer = grism_analysis('temp.fts', cal_file) # instantiate analyzer with fits image and calibration file
+    grism_analyzer = grism_tools('temp.fts', cal_file) # instantiate analyzer with fits image and calibration file
     web_analyzer.run_analysis(web_analyzer, grism_analyzer)
 
 if __name__ == '__main__':

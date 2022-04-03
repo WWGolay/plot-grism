@@ -29,7 +29,7 @@ class grism_web:
             {'label':'Helium', 'value':'He'},
             {'label':'Carbon', 'value':'C'},
             {'label':'Nitrogen', 'value':'N'},
-            {'label':'Oxygen', 'value':'O'}]
+            {'label':'Oxygen', 'value':'O'}] # ? Can we add in calcium here?
         #Set default parameters for graphs.
         self.lines=['H']
         self.mode='def'
