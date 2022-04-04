@@ -5,9 +5,8 @@ prototype updated last Mar 30th 2022
 '''
 
 import io
-#from pywebio.input import file_upload, input_group, NUMBER
-#from pywebio.input import file_upload, input_group, NUMBER
-from pywebio.output import put_text, put_image, use_scope
+from pywebio.input import file_upload, input_group, NUMBER
+from pywebio.output import put_text, put_image, use_scope, put_button, popup
 from pywebio.pin import *
 from pywebio import config,start_server
 import pywebio.input as pywebio_input
@@ -23,8 +22,8 @@ as a parameter, but this isn't useful (some plots use multiple parameters) so a 
 """
 class grism_web:
     def __init__(self):
-        self.plot_radio_dict = [ {'label':'Default', 'value':'def', 'selected':True},
-            {'label':'Strip Image', 'value':'str'}, {'label':'2x2', 'value':'tbt'}  ]
+        #self.plot_radio_dict = [ {'label':'Default', 'value':'def', 'selected':True},
+        #    {'label':'Strip Image', 'value':'str'}, {'label':'2x2', 'value':'tbt'}  ]
         self.lines_checkbox_dict=[
             {'label':'Hydrogen (Balmer)', 'value':'H', 'selected':True},
             {'label':'Helium', 'value':'He'},
@@ -33,10 +32,11 @@ class grism_web:
             {'label':'Oxygen', 'value':'O'}] # ? Can we add in calcium here?
         #Set default parameters for graphs.
         self.lines=['H']
-        self.mode='def'
         self.minWL = 380
         self.maxWL = 750
         self.medavg = 3
+        self.stripHeight = -1
+        self.stripCenter = -1
 
     def update_med_avg(self, med_avg):
         m = med_avg
@@ -59,29 +59,39 @@ class grism_web:
     def update_mode(self, mode):
         self.mode = mode
 
+    def update_strip_height(self, height):
+        self.stripHeight = height
+
+    def update_strip_center(self, center):
+        self.stripCenter = center
+
     @use_scope('fits_section', clear=True)
     def update_fits(self, dummy):
-        if(self.mode == 'def'):
-            fits_figure = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
-            fits_buf = io.BytesIO()
-            fits_figure.savefig(fits_buf)
-            put_image(fits_buf.getvalue())
-        elif(self.mode == 'str'):
-            fits_figure = self.analyzer.plot_strip(cmap='jet')
-            fits_buf = io.BytesIO()
-            fits_figure.savefig(fits_buf)
-            put_image(fits_buf.getvalue())
-        else:
-            fits_figure = self.analyzer.plot_2x2(ref_file='', medavg=self.medavg, xlims =[self.minWL,self.maxWL])
-            fits_buf = io.BytesIO()
-            fits_figure.savefig(fits_buf)
-            put_image(fits_buf.getvalue())                   
+        if self.stripHeight != -1 and self.stripCenter != -1:
+            popup("TODO: Applying Calibration")
+            #fits_figure = self.analyzer.apply_calibration(None, self.stripHeight)
+        fits_figure = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
+        fits_buf = io.BytesIO()
+        fits_figure.savefig(fits_buf)
+        put_image(fits_buf.getvalue())
+
+    @use_scope('strip_section', clear=True)
+    def update_strip(self, dummy):
+        strip_figure = self.analyzer.plot_strip(cmap='jet')
+        strip_buf = io.BytesIO()
+        strip_figure.savefig(strip_buf)
+        put_image(strip_buf.getvalue())
+
+    @use_scope('2b2_section', clear=True)
+    def update_two_by_two(self, dummy):        
+        tbt_figure = self.analyzer.plot_2x2(ref_file='', medavg=self.medavg, xlims =[self.minWL,self.maxWL])
+        tbt_buff = io.BytesIO()
+        tbt_figure.savefig(tbt_buff)
+        put_image(tbt_buff.getvalue())                   
 
     @use_scope('spectrum_section', clear=True)
-    def update_spectrum(self, dummy):
-        #self.lines = lines
-        balmer = 'H' in self.lines    
-        spectrum_figure = self.analyzer.plot_spectrum(calibrated = True, plot_balmer = balmer,title='', medavg = self.medavg)
+    def update_spectrum(self, dummy):   
+        spectrum_figure = self.analyzer.plot_spectrum(calibrated = True, plot_lines = self.lines,title='', medavg = self.medavg)
         spectrum_buf = io.BytesIO()
         spectrum_figure.savefig(spectrum_buf)
         put_image(spectrum_buf.getvalue())
@@ -124,10 +134,12 @@ class grism_web:
         pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_fits)
         pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_gauss)
         
-        self.update_fits(self.mode)#put fits image
-        pywebio_pin.put_radio(label="Plot Mode", name="plotMode", options=self.plot_radio_dict)#pin image options
-        pywebio_pin.pin_on_change(name="plotMode", onchange=self.update_mode)
-        pywebio_pin.pin_on_change(name="plotMode", onchange=self.update_fits)
+        self.update_fits("dummy")#put fits image
+        pywebio_pin.put_input(label="Manual Strip Height", name = "stripHeight", type=NUMBER)
+        pywebio_pin.pin_on_change(name="stripHeight", onchange=self.update_strip_height)
+        pywebio_pin.put_input(label="Manual Strip Center", name = "stripCenter", type=NUMBER)
+        pywebio_pin.pin_on_change(name="stripCenter", onchange=self.update_strip_center)
+        put_button("Execute Manual Calibration", onclick=self.update_fits("dummy"))
         
         self.update_spectrum(self.lines)#put spectrum
         pywebio_pin.put_checkbox(label="Plot Lines", name="plotLines", options=self.lines_checkbox_dict)#pin spectrum options

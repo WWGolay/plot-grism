@@ -185,7 +185,7 @@ class grism_tools:
         return(ymax, np.sum(signal),signal_max,fig)
 
     '''Plots raw or calibrated spectrum'''
-    def plot_spectrum(self, calibrated = True, title='', plot_balmer=True, medavg = 1, xlims =[380,720]):
+    def plot_spectrum(self, calibrated = True, title='', plot_lines=['H'], medavg = 1, xlims =[380,720]):
         fig, ax = plt.subplots(1,1,figsize=(10, 6))
         
         xmin,xmax = xlims
@@ -201,8 +201,18 @@ class grism_tools:
             ax.set_xlim(xmin,xmax)
             ax.set_ylim(0,np.max(y)*1.1)
             ax.grid()
-            if plot_balmer:
+            if 'H' in plot_lines:
                 for x in self.balmer: ax.axvline(x=x,linestyle='-.')
+            if 'He' in plot_lines:
+                for x in self.helium: ax.axvline(x=x,linestyle='-.')
+            if 'C' in plot_lines:
+                for x in self.carbon: ax.axvline(x=x,linestyle='-.')
+            if 'N' in plot_lines:
+                for x in self.nitrogen: ax.axvline(x=x,linestyle='-.')
+            if 'O' in plot_lines:
+                for x in self.oxygen: ax.axvline(x=x,linestyle='-.')
+            if 'Ca' in plot_lines:
+                for x in self.calcium: ax.axvline(x=x,linestyle='-.')                                                                
         else:
             x = self.pixels ; y = self.raw_spec
             y = medfilt(y,kernel_size = medavg)   # Median average if requested

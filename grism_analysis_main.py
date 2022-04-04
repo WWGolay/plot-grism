@@ -13,10 +13,11 @@ import astropy.io.fits as pyfits
 
 def main():
     web_analyzer = grism_web()
-    fits_image = web_analyzer.get_fits(web_analyzer) # Get initial fits image
-
-    with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
-        binary_file.write(fits_image['content'])
+    debug = True
+    if not debug:
+        fits_image = web_analyzer.get_fits(web_analyzer) # Get initial fits image
+        with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
+            binary_file.write(fits_image['content'])
     
     if not False: # TODO: Add advanced option on first page for entry of custom calibration file, otherwise search for one
         defaultDir = 'calibrations/'
