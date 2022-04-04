@@ -6,6 +6,8 @@ from statsmodels.nonparametric.smoothers_lowess import lowess; from scipy.interp
 from scipy.signal import medfilt, medfilt2d,find_peaks; from scipy.optimize import curve_fit
 from datetime import datetime; import matplotlib.pyplot as plt; import sys
 
+plt.switch_backend('Agg')
+
 ''' Utilities for plotting and calibrating grism spectra
         -If both a calibration and reference spectrum are passed, apply the calibration to the image 
         and then the reference spectrum may be called when plotting a 2x2. 
