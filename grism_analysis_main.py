@@ -13,7 +13,7 @@ import astropy.io.fits as pyfits
 
 def main():
     web_analyzer = grism_web()
-    debug = True
+    debug = False
     if not debug:
         fits_image = web_analyzer.get_fits(web_analyzer) # Get initial fits image
         with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed

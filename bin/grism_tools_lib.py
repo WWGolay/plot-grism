@@ -52,6 +52,7 @@ class grism_tools:
             self.apply_calibration(cal_file)
         elif cal_file != '':
             self.cal_file = cal_file
+            self.ref_file = None
             self.apply_calibration(cal_file)
         else:
             self.ref_file = ref_file
@@ -501,3 +502,6 @@ class grism_tools:
             for j,w in enumerate(self.wave):
                 fh.write('%.2f %.4f\n' % (w, gain_curve[j]))
         print('Wrote calibration file %s' % cal_file)
+
+    def get_calib(self):
+        return self.cal_file
