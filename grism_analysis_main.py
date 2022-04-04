@@ -6,7 +6,6 @@ prototype updated last Mar 27th 2022
 from bin.grism_analysis_web import grism_web
 from bin.grism_analysis_lib import grism_analysis
 import os
-import matplotlib.pyplot as plt
 
 def main():
     web_analyzer = grism_web()

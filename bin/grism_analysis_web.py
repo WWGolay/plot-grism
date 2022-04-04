@@ -5,7 +5,8 @@ prototype updated last Mar 30th 2022
 '''
 
 import io
-from pywebio.input import file_upload, input_group, NUMBER
+#from pywebio.input import file_upload, input_group, NUMBER
+#from pywebio.input import file_upload, input_group, NUMBER
 from pywebio.output import put_text, put_image, use_scope
 from pywebio.pin import *
 from pywebio import config,start_server
