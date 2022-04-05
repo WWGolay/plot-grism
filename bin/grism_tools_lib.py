@@ -61,7 +61,7 @@ class grism_tools:
             self.init_calibration(ref_file)
 
     ''' Function to apply a calibration to the image '''
-    def apply_calibration(self, cal_file, ywidth=0, ycenter=0):
+    def apply_calibration(self, cal_file, ywidth=-1, ycenter=-1):
         # Crack calibration file, extract params
         try:
             fn = open(self.cal_file,'r')
@@ -81,12 +81,12 @@ class grism_tools:
         subimage_box = [int(x) for x in lines[2].split(',')]
         xmin,xmax,ymin,ymax = subimage_box
 
-        if ycenter != 0:
+        if ycenter != -1:
             w = ymax - ymin
             ymin = ycenter - int(w/2)
             ymax = ycenter + int(w/2)
 
-        if ywidth != 0:
+        if ywidth != -1:
             ymin += int(ywidth/2)
             ymax -= int(ywidth/2)
         
