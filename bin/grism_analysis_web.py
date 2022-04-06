@@ -38,6 +38,8 @@ class grism_web:
         self.temperature = 10000
         self.stripHeight = -1
         self.stripCenter = -1
+        self.gaussMinWl = 300
+        self.gaussMaxWl = 600
 
     def raise_calibration_error(self):
         popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER")
@@ -54,7 +56,7 @@ class grism_web:
             m=3
         if(med_avg%2 == 0):
             m -= 1
-            pin.medavg = m 
+            #pin.medavg = m 
         self.medavg = m
 
     def update_lower_wl(self, lower):
@@ -77,6 +79,12 @@ class grism_web:
 
     def update_temperature(self, temperature):
         self.temperature = temperature
+
+    def update_gauss_min(self, min):
+        self.gaussMinWl = min
+    
+    def update_gauss_max(self,max):
+        self.gaussMaxWl = max
 
     @use_scope('fits_section', clear=True)
     def update_fits(self, dummy="dummy"):
@@ -110,7 +118,7 @@ class grism_web:
 
     @use_scope('gauss_section', clear=True)
     def update_gauss(self, dummy=None):
-        gauss_figure, popt = self.analyzer.fit_gaussian(self.minWL,self.maxWL, emission = True)
+        gauss_figure, popt = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = True)
         gauss_buf = io.BytesIO()
         gauss_figure.savefig(gauss_buf)
         put_image(gauss_buf.getvalue())
@@ -127,41 +135,26 @@ class grism_web:
     def get_fits(self):
         fits_input = [
         pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=".fts", required=True),#Fits image file select
-        pywebio_input.file_upload("(Advanced) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
+        #pywebio_input.file_upload("(Advanced) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
         ]
         form_ans=input_group("Select a Fits image to analyze", fits_input)
         fits = form_ans['fits']
-        cal = form_ans['cal']
-        return fits, cal
+        #cal = form_ans['cal']
+        return fits,None
 
     @config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def run_analysis(self, grism_analyzer):
         self.analyzer = grism_analyzer
-        put_text("GRISM ANALYSIS")
-
-        #Outputs that change multiple graphs
-        pywebio_pin.put_input(label="Median Average", name = "medavg", type=NUMBER, placeholder=3)
-        pywebio_pin.pin_on_change(name="medavg", onchange=self.update_med_avg)
-        pywebio_pin.pin_on_change(name="medavg", onchange=self.update_fits)
-        pywebio_pin.pin_on_change(name="medavg", onchange=self.update_spectrum)
-
-        pywebio_pin.put_slider(label="Minimum Wavelength", name="minWL", value= self.minWL, min_value= 0, max_value = 1000, step = 1)#pin gauss options
-        pywebio_pin.pin_on_change(name="minWL", onchange=self.update_lower_wl)
-        pywebio_pin.pin_on_change(name="minWL", onchange=self.update_fits)
-        pywebio_pin.pin_on_change(name="minWL", onchange=self.update_gauss)
-
-        pywebio_pin.put_slider(label="Maximum Wavelength", name="maxWL", value= self.maxWL, min_value= 0, max_value = 1000, step = 1)
-        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_upper_wl)
-        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_fits)
-        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_gauss)
+        put_text("GRISM ANALYSIS")       
         
         self.update_fits()#put fits image
-        
+        """4/6/2022 Removed for initial draft to simplify 
         pywebio_pin.put_input(label="Manual Strip Height", name = "stripHeight", type=NUMBER)
         pywebio_pin.pin_on_change(name="stripHeight", onchange=self.update_strip_height)
         pywebio_pin.put_input(label="Manual Strip Center", name = "stripCenter", type=NUMBER)
         pywebio_pin.pin_on_change(name="stripCenter", onchange=self.update_strip_center)
         put_button("Execute Manual Strip Calibration", onclick=self.update_strip)
+        """
         
         self.update_strip()
 
@@ -170,14 +163,36 @@ class grism_web:
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_lines)
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_spectrum)
 
-        self.update_gauss()#put gauss
+        pywebio_pin.put_input(label="Median Average", name = "medavg", type=NUMBER, placeholder=3)
+        pywebio_pin.pin_on_change(name="medavg", onchange=self.update_med_avg)
+        pywebio_pin.pin_on_change(name="medavg", onchange=self.update_spectrum)
 
+        pywebio_pin.put_slider(label="Minimum Wavelength", name="minWL", value= self.minWL, min_value= 0, max_value = 1000, step = 1)#pin gauss options
+        pywebio_pin.pin_on_change(name="minWL", onchange=self.update_lower_wl)
+        pywebio_pin.pin_on_change(name="minWL", onchange=self.update_spectrum)
+
+        pywebio_pin.put_slider(label="Maximum Wavelength", name="maxWL", value= self.maxWL, min_value= 0, max_value = 1000, step = 1)
+        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_upper_wl)
+        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_spectrum)
+
+        self.update_gauss()#put gauss
+        pywebio_pin.put_slider(label="Minimum Gauss Wavelength", name="minGauss", value= self.gaussMinWl, min_value= 0, max_value = 1000, step = 1)#pin gauss options
+        pywebio_pin.pin_on_change(name="minGauss", onchange=self.update_gauss_min)
+        pywebio_pin.pin_on_change(name="minGauss", onchange=self.update_gauss)
+
+        pywebio_pin.put_slider(label="Maximum Gauss Wavelength", name="maxGauss", value= self.gaussMaxWl, min_value= 0, max_value = 1000, step = 1)
+        pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss_max)
+        pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss)
+
+        #4/6/2022 - commented out twoby two and rectified to decrease complication and prepare program in time
+        """
         self.update_two_by_two()
 
         self.update_rectified()
         pywebio_pin.put_input(label="Temperature (K)", name = "temper", type=NUMBER, placeholder=10000)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_temperature)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_rectified)
+        """
 
         #put file input at the bottom that runs the analysis again (also to keep the form active)
         img = pywebio_input.file_upload("Select Another Fits Image For Analysis:", accept=".fts")
