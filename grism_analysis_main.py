@@ -13,7 +13,7 @@ import astropy.io.fits as pyfits
 
 def main():
     web_analyzer = grism_web()
-    take_input = True
+    take_input = False
     if take_input:
         fits_image, calibration = web_analyzer.get_fits(web_analyzer) # Get initial fits image
 

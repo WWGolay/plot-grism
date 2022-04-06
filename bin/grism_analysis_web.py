@@ -23,6 +23,7 @@ as a parameter, but this isn't useful (some plots use multiple parameters) so a 
 """
 class grism_web:
     def __init__(self):
+        config(theme='minty')
         self.lines_checkbox_dict=[
             {'label':'Hydrogen (Balmer)', 'value':'H', 'selected':True},
             {'label':'Helium', 'value':'He'},
@@ -44,11 +45,13 @@ class grism_web:
     def raise_calibration_error(self):
         popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER")
 
+    """Removed 4/6/2022 to simplify program and remove anchored dropdown
     def resubmit_grism_image(self, img):
         with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
             binary_file.write(img['content'])
         grism_analyzer = grism_tools('temp/temp.fts', self.analyzer.get_calib())
         self.run_analysis(self, grism_analyzer)
+    """
 
     def update_med_avg(self, med_avg):
         m = med_avg
@@ -60,9 +63,15 @@ class grism_web:
         self.medavg = m
 
     def update_lower_wl(self, lower):
+        if lower > self.maxWL:
+            lower = self.maxWL - 1
+            pin.minWl = self.maxWL - 1
         self.minWL = lower
     
     def update_upper_wl(self, upper):
+        if upper < self.minWL:
+            upper = self.minWL + 1
+            pin.maxWl = self.minWL + 1        
         self.maxWL = upper
         
     def update_lines(self, lines):
@@ -81,9 +90,15 @@ class grism_web:
         self.temperature = temperature
 
     def update_gauss_min(self, min):
+        if min > self.gaussMaxWl:
+            min = self.gaussMaxWl - 1
+            pin.minGauss = self.gaussMaxWl - 1
         self.gaussMinWl = min
     
     def update_gauss_max(self,max):
+        if max < self.gaussMinWl:
+            max = self.gaussMinWl + 1
+            pin.maxGauss = self.gaussMinWl + 1
         self.gaussMaxWl = max
 
     @use_scope('fits_section', clear=True)
@@ -145,7 +160,8 @@ class grism_web:
     @config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def run_analysis(self, grism_analyzer):
         self.analyzer = grism_analyzer
-        put_text("GRISM ANALYSIS")       
+        logo = open('./images/UILogoTransparent.png', 'rb').read()  
+        put_image(logo)     
         
         self.update_fits()#put fits image
         """4/6/2022 Removed for initial draft to simplify 
@@ -193,8 +209,6 @@ class grism_web:
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_temperature)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_rectified)
         """
-
-        #put file input at the bottom that runs the analysis again (also to keep the form active)
-        img = pywebio_input.file_upload("Select Another Fits Image For Analysis:", accept=".fts")
-        self.resubmit_grism_image(img)
-        
+        #This replaces the option for another fits image, which is simpler and gets rid of the annoying anchor
+        while True:
+            change_detail = pin_wait_change('minGauss')                
