@@ -23,14 +23,13 @@ as a parameter, but this isn't useful (some plots use multiple parameters) so a 
 """
 class grism_web:
     def __init__(self):
-        #self.plot_radio_dict = [ {'label':'Default', 'value':'def', 'selected':True},
-        #    {'label':'Strip Image', 'value':'str'}, {'label':'2x2', 'value':'tbt'}  ]
         self.lines_checkbox_dict=[
             {'label':'Hydrogen (Balmer)', 'value':'H', 'selected':True},
             {'label':'Helium', 'value':'He'},
             {'label':'Carbon', 'value':'C'},
             {'label':'Nitrogen', 'value':'N'},
-            {'label':'Oxygen', 'value':'O'}] # ? Can we add in calcium here?
+            {'label':'Oxygen', 'value':'O'},
+            {'label':'Calcium', 'value':'Ca'}]
         #Set default parameters for graphs.
         self.lines=['H']
         self.minWL = 380
@@ -39,6 +38,9 @@ class grism_web:
         self.temperature = 10000
         self.stripHeight = -1
         self.stripCenter = -1
+
+    def raise_calibration_error(self):
+        popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER")
 
     def resubmit_grism_image(self, img):
         with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
@@ -78,9 +80,6 @@ class grism_web:
 
     @use_scope('fits_section', clear=True)
     def update_fits(self, dummy="dummy"):
-        if self.stripHeight != -1 and self.stripCenter != -1:
-            popup("TODO: Applying Calibration")
-            #fits_figure = self.analyzer.apply_calibration(None, self.stripHeight)
         fits_figure = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
         fits_buf = io.BytesIO()
         fits_figure.savefig(fits_buf)
@@ -88,6 +87,8 @@ class grism_web:
 
     @use_scope('strip_section', clear=True)
     def update_strip(self, dummy=None):
+        if self.stripHeight != -1 and self.stripCenter != -1:
+            self.analyzer.apply_calibration("test", self.stripHeight, self.stripCenter)        
         strip_figure = self.analyzer.plot_strip(cmap='jet')
         strip_buf = io.BytesIO()
         strip_figure.savefig(strip_buf)
@@ -125,11 +126,13 @@ class grism_web:
     @config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def get_fits(self):
         fits_input = [
-        pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=".fts", required=True)#Fits image file select
+        pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=".fts", required=True),#Fits image file select
+        pywebio_input.file_upload("(Advanced) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
         ]
         form_ans=input_group("Select a Fits image to analyze", fits_input)
         fits = form_ans['fits']
-        return fits
+        cal = form_ans['cal']
+        return fits, cal
 
     @config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def run_analysis(self, grism_analyzer):
@@ -158,7 +161,7 @@ class grism_web:
         pywebio_pin.pin_on_change(name="stripHeight", onchange=self.update_strip_height)
         pywebio_pin.put_input(label="Manual Strip Center", name = "stripCenter", type=NUMBER)
         pywebio_pin.pin_on_change(name="stripCenter", onchange=self.update_strip_center)
-        put_button("Execute Manual Strip Calibration", onclick=self.update_fits)
+        put_button("Execute Manual Strip Calibration", onclick=self.update_strip)
         
         self.update_strip()
 
