@@ -65,13 +65,13 @@ class grism_web:
     def update_lower_wl(self, lower):
         if lower > self.maxWL:
             lower = self.maxWL - 1
-            pin.minWl = self.maxWL - 1
+            pin.minWL = self.maxWL - 1
         self.minWL = lower
     
     def update_upper_wl(self, upper):
         if upper < self.minWL:
             upper = self.minWL + 1
-            pin.maxWl = self.minWL + 1        
+            pin.maxWL = self.minWL + 1        
         self.maxWL = upper
         
     def update_lines(self, lines):
