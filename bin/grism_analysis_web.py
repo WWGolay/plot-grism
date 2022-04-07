@@ -39,8 +39,10 @@ class grism_web:
         self.temperature = 10000
         self.stripHeight = -1
         self.stripCenter = -1
-        self.gaussMinWl = 300
-        self.gaussMaxWl = 600
+        self.gaussMinWl = 651
+        self.gaussMaxWl = 661
+        self.emission_check_box_dict = [{'label':'Emission', 'value':1, 'selected':False}]
+        self.emission = 0
 
     def raise_calibration_error(self):
         popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER")
@@ -100,6 +102,9 @@ class grism_web:
             max = self.gaussMinWl + 1
             pin.maxGauss = self.gaussMinWl + 1
         self.gaussMaxWl = max
+    
+    def update_emission(self, emission):
+        self.emission = emission
 
     @use_scope('fits_section', clear=True)
     def update_fits(self, dummy="dummy"):
@@ -133,7 +138,7 @@ class grism_web:
 
     @use_scope('gauss_section', clear=True)
     def update_gauss(self, dummy=None):
-        gauss_figure, popt = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = True)
+        gauss_figure, popt = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = self.emission)
         gauss_buf = io.BytesIO()
         gauss_figure.savefig(gauss_buf)
         put_image(gauss_buf.getvalue())
@@ -199,6 +204,10 @@ class grism_web:
         pywebio_pin.put_slider(label="Maximum Gauss Wavelength", name="maxGauss", value= self.gaussMaxWl, min_value= 0, max_value = 1000, step = 1)
         pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss_max)
         pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss)
+
+        pywebio_pin.put_checkbox(label="Emission Line", name="emission", options=self.emission_check_box_dict)
+        pywebio_pin.pin_on_change(name="emission", onchange=self.update_emission)
+        pywebio_pin.pin_on_change(name="emission", onchange=self.update_gauss)
 
         #4/6/2022 - commented out twoby two and rectified to decrease complication and prepare program in time
         """

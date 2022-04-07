@@ -13,18 +13,18 @@ import astropy.io.fits as pyfits
 
 def main():
     web_analyzer = grism_web()
-    take_input = False
+    take_input = True
     if take_input:
         fits_image, calibration = web_analyzer.get_fits(web_analyzer) # Get initial fits image
 
-        with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
+        with open('temp/im.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
             binary_file.write(fits_image['content'])
     
         if calibration == None: # TODO: Add advanced option on first page for entry of custom calibration file, otherwise search for one
             defaultDir = 'calibrations/'
             
             # Get date of image to iterate back to latest calibration file, parse header into date object
-            hdulist = pyfits.open('temp/temp.fts')
+            hdulist = pyfits.open('temp/im.fts')
             fitsDate = hdulist[0].header['DATE-OBS']
             startDate = date(int(fitsDate[0:4]), int(fitsDate[5:7]), int(fitsDate[8:10]))
             
@@ -35,16 +35,16 @@ def main():
                     break
                 else: continue
         else:
-            with open('temp/temp_calib.csv', 'wb') as binary_file: # Write fits image to file so it can be analyzed
+            with open('temp/cal.csv', 'wb') as binary_file: # Write fits image to file so it can be analyzed
                 binary_file.write(calibration['content'])
-            cal_file = 'temp/temp_calib.csv'
+            cal_file = 'temp/cal.csv'
     else:
-        cal_file = 'temp/temp_calib.csv'
+        cal_file = 'temp/cal.csv'
 
     if not os.path.exists(cal_file):
         web_analyzer.raise_calibration_error()
     
-    grism_analyzer = grism_tools('temp/temp.fts', cal_file) # instantiate analyzer with fits image and calibration file
+    grism_analyzer = grism_tools('temp/im.fts', cal_file) # instantiate analyzer with fits image and calibration file
     web_analyzer.run_analysis(web_analyzer, grism_analyzer)
 
 if __name__ == '__main__':
