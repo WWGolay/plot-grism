@@ -4,9 +4,10 @@ import numpy as np
 import astropy.io.fits as pyfits; from scipy.ndimage.interpolation import rotate
 from statsmodels.nonparametric.smoothers_lowess import lowess; from scipy.interpolate import interp1d
 from scipy.signal import medfilt, medfilt2d,find_peaks; from scipy.optimize import curve_fit
-from datetime import datetime; import matplotlib.pyplot as plt; import sys
+from datetime import datetime; import matplotlib.pyplot as plt, matplotlib as mpl; import sys
 
 plt.switch_backend('Agg')
+mpl.rcParams['axes.prop_cycle'] = mpl.cycler('color', ['#377eb8', '#4daf4a', '#e41a1c', '#dede00', '#ff7f00', '#999999', '#984ea3', '#f781bf', '#a65628'])
 
 ''' Utilities for plotting and calibrating grism spectra
         -If both a calibration and reference spectrum are passed, apply the calibration to the image 
@@ -210,17 +211,20 @@ class grism_tools:
             ax.set_ylim(0,np.max(y)*1.1)
             ax.grid()
             if 'H' in plot_lines:
-                for x in self.balmer: ax.axvline(x=x,linestyle='-.')
+                for x in self.balmer: ax.axvline(x=x,linestyle='-.', label='Hydrogen (Balmer)', color='#377eb8')
             if 'He' in plot_lines:
-                for x in self.helium: ax.axvline(x=x,linestyle='-.')
+                for x in self.helium: ax.axvline(x=x,linestyle='-.', label='Helium', color='#4daf4a')
             if 'C' in plot_lines:
-                for x in self.carbon: ax.axvline(x=x,linestyle='-.')
+                for x in self.carbon: ax.axvline(x=x,linestyle='-.', label='Carbon', color='#e41a1c')
             if 'N' in plot_lines:
-                for x in self.nitrogen: ax.axvline(x=x,linestyle='-.')
+                for x in self.nitrogen: ax.axvline(x=x,linestyle='-.', label='Nitrogen', color='#dede00')
             if 'O' in plot_lines:
-                for x in self.oxygen: ax.axvline(x=x,linestyle='-.')
+                for x in self.oxygen: ax.axvline(x=x,linestyle='-.', label='Oxygen', color='#ff7f00')
             if 'Ca' in plot_lines:
-                for x in self.calcium: ax.axvline(x=x,linestyle='-.')                                                                
+                for x in self.calcium: ax.axvline(x=x,linestyle='-.', label='Calcium', color='#999999')
+            handles,labels = fig.gca().get_legend_handles_labels()
+            by_label = dict(zip(labels, handles))
+            ax.legend(by_label.values(), by_label.keys(), loc=1)                                                          
         else:
             x = self.pixels ; y = self.raw_spec
             y = medfilt(y,kernel_size = medavg)   # Median average if requested
