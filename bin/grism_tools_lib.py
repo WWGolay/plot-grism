@@ -139,6 +139,9 @@ class grism_tools:
 
         self.wave_ref = wave_ref
         self.spec_ref = spec_ref
+    
+    def wave_range(self):
+        return self.wave[0], self.wave[-1]
         
     def header_params(self):
         return self.im, self.title, self.object, self.utdate, self.filter, self.telescope, self.instrument, self.z
