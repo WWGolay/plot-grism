@@ -6,9 +6,9 @@ prototype updated last Mar 30th 2022
 
 import io
 from pywebio.input import file_upload, input_group, NUMBER
-from pywebio.output import put_text, put_image, use_scope, put_button, popup
+from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button
 from pywebio.pin import *
-from pywebio import config,start_server
+from pywebio import config,start_server,session
 import pywebio.input as pywebio_input
 import pywebio.pin as pywebio_pin
 import io
@@ -106,55 +106,65 @@ class grism_web:
     def update_emission(self, emission):
         self.emission = emission
 
-    @use_scope('fits_section', clear=True)
+    @use_scope('fits_section')
     def update_fits(self, dummy="dummy"):
         fits_figure = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
         fits_buf = io.BytesIO()
         fits_figure.savefig(fits_buf)
+        clear(scope='fits_section')
         put_image(fits_buf.getvalue())
 
-    @use_scope('strip_section', clear=True)
+    @use_scope('strip_section')
     def update_strip(self, dummy=None):
         if self.stripHeight != -1 and self.stripCenter != -1:
             self.analyzer.apply_calibration("test", self.stripHeight, self.stripCenter)        
         strip_figure = self.analyzer.plot_strip(cmap='jet')
         strip_buf = io.BytesIO()
         strip_figure.savefig(strip_buf)
+        clear(scope='strip_section')
         put_image(strip_buf.getvalue())
 
-    @use_scope('2b2_section', clear=True)
+    @use_scope('2b2_section')
     def update_two_by_two(self, dummy=None):        
         tbt_figure = self.analyzer.plot_2x2(ref_file='', medavg=self.medavg, xlims =[self.minWL,self.maxWL])
         tbt_buff = io.BytesIO()
         tbt_figure.savefig(tbt_buff)
+        clear(scope='2b2_section')
         put_image(tbt_buff.getvalue())                   
 
-    @use_scope('spectrum_section', clear=True)
+    @use_scope('spectrum_section')
     def update_spectrum(self, dummy=None):   
-        spectrum_figure = self.analyzer.plot_spectrum(calibrated = True, plot_lines = self.lines,title='', medavg = self.medavg)
+        spectrum_figure = self.analyzer.plot_spectrum(calibrated = True, plot_lines = self.lines,title='', medavg = self.medavg, xlims = [self.minWL, self.maxWL])
         spectrum_buf = io.BytesIO()
         spectrum_figure.savefig(spectrum_buf)
+        clear(scope='spectrum_section')
         put_image(spectrum_buf.getvalue())
 
-    @use_scope('gauss_section', clear=True)
+    @use_scope('gauss_section')
     def update_gauss(self, dummy=None):
         gauss_figure, popt = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = self.emission)
         gauss_buf = io.BytesIO()
         gauss_figure.savefig(gauss_buf)
+        clear(scope='gauss_section')
         put_image(gauss_buf.getvalue())
 
-    @use_scope('rectified_section', clear = True)
+    @use_scope('rectified_section')
     def update_rectified(self, dummy = None):
         rectified_figure = self.analyzer.plot_rectified_spectrum(self.temperature,wavemin=self.minWL,wavemax=self.maxWL)
         rectified_buff = io.BytesIO()
         rectified_figure.savefig(rectified_buff)
-        put_image(rectified_buff.getvalue())        
+        clear(scope='rectified_section')
+        put_image(rectified_buff.getvalue())       
+
+    def dowload_pdf(self):
+        popup("Dowloading Placeholder")
+        #session.download("Grism_Output.pdf",)
 
 
-    @config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
+    #@config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def get_fits(self):
         fits_input = [
-        pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=".fts", required=True),#Fits image file select
+        pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=[".fts",".fits",".fit"], required=True),#Fits image file select
         #pywebio_input.file_upload("(Advanced) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
         ]
         form_ans=input_group("Select a Fits image to analyze", fits_input)
@@ -162,9 +172,16 @@ class grism_web:
         #cal = form_ans['cal']
         return fits,None
 
-    @config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
+    #@config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def run_analysis(self, grism_analyzer):
-        self.analyzer = grism_analyzer
+        self.analyzer = grism_analyzer #Copy analyzer from constructor
+        
+        #Updated defaults from calibration
+        minwave, maxwave = grism_analyzer.wave_range()
+        self.update_lower_wl(minwave)
+        self.update_upper_wl(maxwave)
+
+
         logo = open('./images/UILogoTransparent.png', 'rb').read()  
         put_image(logo)     
         
@@ -178,13 +195,14 @@ class grism_web:
         """
         
         self.update_strip()
-
-        self.update_spectrum(self.lines)#put spectrum
+        
+        self.update_spectrum(self.lines)#put spectrum        
         pywebio_pin.put_checkbox(label="Plot Lines", name="plotLines", options=self.lines_checkbox_dict)#pin spectrum options
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_lines)
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_spectrum)
 
-        pywebio_pin.put_input(label="Median Average", name = "medavg", type=NUMBER, placeholder=3)
+        #pywebio_pin.put_input(label="Median Average", name = "medavg", type=NUMBER, placeholder=3)
+        pywebio_pin.put_slider(label="Minimum Average", name="medavg", value= self.medavg, min_value= 1, max_value = 21, step = 2)
         pywebio_pin.pin_on_change(name="medavg", onchange=self.update_med_avg)
         pywebio_pin.pin_on_change(name="medavg", onchange=self.update_spectrum)
 
@@ -209,6 +227,7 @@ class grism_web:
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_emission)
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_gauss)
 
+        put_button("Dowload PDF", onclick=self.dowload_pdf);
         #4/6/2022 - commented out twoby two and rectified to decrease complication and prepare program in time
         """
         self.update_two_by_two()
@@ -219,5 +238,4 @@ class grism_web:
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_rectified)
         """
         #This replaces the option for another fits image, which is simpler and gets rid of the annoying anchor
-        while True:
-            change_detail = pin_wait_change('minGauss')                
+        session.hold()               

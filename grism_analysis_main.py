@@ -21,9 +21,10 @@ def main():
 
     web_analyzer = grism_web()
     default_temp_dir = cfg.get('default', 'default_temp_dir')
-    take_input = cfg.get('default', 'take_input')
+    take_input = False#cfg.get('default', 'take_input')
     if take_input:
-        fits_image, calibration = web_analyzer.get_fits(web_analyzer) # Get initial fits image
+        #fits_image, calibration = web_analyzer.get_fits(web_analyzer) # Get initial fits image
+        fits_image, calibration = web_analyzer.get_fits() # Get initial fits image
 
         with open(default_temp_dir+'/im.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
             binary_file.write(fits_image['content'])
@@ -57,7 +58,8 @@ def main():
         web_analyzer.raise_calibration_error()
     
     grism_analyzer = grism_tools(default_temp_dir+'/im.fts', cal_file) # instantiate analyzer with fits image and calibration file
-    web_analyzer.run_analysis(web_analyzer, grism_analyzer)
+    #web_analyzer.run_analysis(web_analyzer, grism_analyzer)
+    web_analyzer.run_analysis(grism_analyzer)
 
 if __name__ == '__main__':
     main()
