@@ -5,8 +5,9 @@ prototype updated last Mar 30th 2022
 '''
 
 import io
+from turtle import width
 from pywebio.input import file_upload, input_group, NUMBER
-from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button
+from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button,put_html
 from pywebio.pin import *
 from pywebio import config,start_server,session
 import pywebio.input as pywebio_input
@@ -23,7 +24,7 @@ as a parameter, but this isn't useful (some plots use multiple parameters) so a 
 """
 class grism_web:
     def __init__(self):
-        config(theme='minty')
+        config(theme='minty', title="Iowa Grism Analysis")
         self.lines_checkbox_dict=[
             {'label':'Hydrogen (Balmer)', 'value':'H', 'selected':True},
             {'label':'Helium', 'value':'He'},
@@ -157,11 +158,12 @@ class grism_web:
         put_image(rectified_buff.getvalue())       
 
     def dowload_pdf(self):
-        popup("Dowloading Placeholder")
-        #session.download("Grism_Output.pdf",)
+        self.analyzer.get_pdf(self.lines,self.medavg,self.minWL,self.maxWL,self.gaussMinWl, self.gaussMaxWl,self.emission)
+        #popup("Dowloading Placeholder")
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("Grism.pdf",content)
 
 
-    #@config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def get_fits(self):
         fits_input = [
         pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=[".fts",".fits",".fit"], required=True),#Fits image file select
@@ -172,7 +174,6 @@ class grism_web:
         #cal = form_ans['cal']
         return fits,None
 
-    #@config(title='Iowa Robotic Observatory Observing Planner',theme="dark") 
     def run_analysis(self, grism_analyzer):
         self.analyzer = grism_analyzer #Copy analyzer from constructor
         
@@ -183,8 +184,9 @@ class grism_web:
 
 
         logo = open('./images/UILogoTransparent.png', 'rb').read()  
-        put_image(logo)     
-        
+        put_image(logo, height="20%", width="50%")     
+        put_html("<h1>Grism Analysis Results</h1>")
+        put_html("<h3>Image</h3>")
         self.update_fits()#put fits image
         """4/6/2022 Removed for initial draft to simplify 
         pywebio_pin.put_input(label="Manual Strip Height", name = "stripHeight", type=NUMBER)
@@ -192,11 +194,10 @@ class grism_web:
         pywebio_pin.put_input(label="Manual Strip Center", name = "stripCenter", type=NUMBER)
         pywebio_pin.pin_on_change(name="stripCenter", onchange=self.update_strip_center)
         put_button("Execute Manual Strip Calibration", onclick=self.update_strip)
-        """
-        
+        """        
         self.update_strip()
-        
-        self.update_spectrum(self.lines)#put spectrum        
+
+        put_html("<h3>Spectrum</h3>")   
         pywebio_pin.put_checkbox(label="Plot Lines", name="plotLines", options=self.lines_checkbox_dict)#pin spectrum options
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_lines)
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_spectrum)
@@ -206,15 +207,17 @@ class grism_web:
         pywebio_pin.pin_on_change(name="medavg", onchange=self.update_med_avg)
         pywebio_pin.pin_on_change(name="medavg", onchange=self.update_spectrum)
 
-        pywebio_pin.put_slider(label="Minimum Wavelength", name="minWL", value= self.minWL, min_value= 0, max_value = 1000, step = 1)#pin gauss options
+        pywebio_pin.put_slider(label="Minimum Wavelength", name="minWL", value= self.minWL, min_value= 0, max_value = 1000, step = 5)#pin gauss options
         pywebio_pin.pin_on_change(name="minWL", onchange=self.update_lower_wl)
         pywebio_pin.pin_on_change(name="minWL", onchange=self.update_spectrum)
 
-        pywebio_pin.put_slider(label="Maximum Wavelength", name="maxWL", value= self.maxWL, min_value= 0, max_value = 1000, step = 1)
+        pywebio_pin.put_slider(label="Maximum Wavelength", name="maxWL", value= self.maxWL, min_value= 0, max_value = 1000, step = 5)
         pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_upper_wl)
         pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_spectrum)
 
-        self.update_gauss()#put gauss
+        self.update_spectrum(self.lines)#put spectrum
+
+        put_html("<h3>Gaussian Filter</h3>")        
         pywebio_pin.put_slider(label="Minimum Gauss Wavelength", name="minGauss", value= self.gaussMinWl, min_value= 0, max_value = 1000, step = 1)#pin gauss options
         pywebio_pin.pin_on_change(name="minGauss", onchange=self.update_gauss_min)
         pywebio_pin.pin_on_change(name="minGauss", onchange=self.update_gauss)
@@ -226,6 +229,8 @@ class grism_web:
         pywebio_pin.put_checkbox(label="Emission Line", name="emission", options=self.emission_check_box_dict)
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_emission)
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_gauss)
+        
+        self.update_gauss()#put gauss
 
         put_button("Dowload PDF", onclick=self.dowload_pdf);
         #4/6/2022 - commented out twoby two and rectified to decrease complication and prepare program in time

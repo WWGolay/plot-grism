@@ -5,6 +5,7 @@ import astropy.io.fits as pyfits; from scipy.ndimage.interpolation import rotate
 from statsmodels.nonparametric.smoothers_lowess import lowess; from scipy.interpolate import interp1d
 from scipy.signal import medfilt, medfilt2d,find_peaks; from scipy.optimize import curve_fit
 from datetime import datetime; import matplotlib.pyplot as plt, matplotlib as mpl; import sys
+from matplotlib.backends.backend_pdf import PdfPages
 
 plt.switch_backend('Agg')
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler('color', ['#377eb8', '#4daf4a', '#e41a1c', '#dede00', '#ff7f00', '#999999', '#984ea3', '#f781bf', '#a65628'])
@@ -519,3 +520,13 @@ class grism_tools:
 
     def get_calib(self):
         return self.cal_file
+
+    #Note 4/11/21, parameters will need to be updated with other plots, or restructuring to make them pull from self. parameters.
+    def get_pdf(self,lines,medavg,minSpectrum,maxSpectrum,minGauss,maxGauss,emission):
+        pages = PdfPages("./temp/Grism.pdf")
+        pages.savefig(self.plot_image(figsize=(10,10), cmap='gray'))            
+        pages.savefig(self.plot_strip(cmap='jet'))            
+        pages.savefig(self.plot_spectrum(calibrated = True, plot_lines = lines,title='', medavg = medavg, xlims = [minSpectrum, maxSpectrum]))  
+        pages.savefig(self.fit_gaussian(minGauss,maxGauss,emission)[0])#Use [0] at end because fit_gaussian returns tuple
+        pages.close()        
+              

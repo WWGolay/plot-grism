@@ -58,7 +58,6 @@ def main():
         web_analyzer.raise_calibration_error()
     
     grism_analyzer = grism_tools(default_temp_dir+'/im.fts', cal_file) # instantiate analyzer with fits image and calibration file
-    #web_analyzer.run_analysis(web_analyzer, grism_analyzer)
     web_analyzer.run_analysis(grism_analyzer)
 
 if __name__ == '__main__':
