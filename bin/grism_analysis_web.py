@@ -5,7 +5,7 @@ prototype updated last Mar 30th 2022
 '''
 
 import io
-from turtle import width
+#from turtle import width
 from pywebio.input import file_upload, input_group, NUMBER
 from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button,put_html
 from pywebio.pin import *
@@ -13,6 +13,7 @@ from pywebio import config,start_server,session
 import pywebio.input as pywebio_input
 import pywebio.pin as pywebio_pin
 import io
+import matplotlib.pyplot as plt
 from bin.grism_tools_lib import grism_tools
 """
 Notes:
@@ -110,23 +111,21 @@ class grism_web:
     @use_scope('fits_section')
     def update_fits(self, dummy="dummy"):
         fits_figure = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
-        fits_buf = io.BytesIO()
-        fits_figure.savefig(fits_buf)
+        fits_figure.savefig('./temp/grism.png')
         clear(scope='fits_section')
-        put_image(fits_buf.getvalue())
+        put_image(open('./temp/grism.png', 'rb').read())
 
     @use_scope('strip_section')
     def update_strip(self, dummy=None):
         if self.stripHeight != -1 and self.stripCenter != -1:
             self.analyzer.apply_calibration("test", self.stripHeight, self.stripCenter)        
         strip_figure = self.analyzer.plot_strip(cmap='jet')
-        strip_buf = io.BytesIO()
-        strip_figure.savefig(strip_buf)
+        strip_figure.savefig('./temp/strip.png')
         clear(scope='strip_section')
-        put_image(strip_buf.getvalue())
+        put_image(open('./temp/strip.png', 'rb').read())
 
     @use_scope('2b2_section')
-    def update_two_by_two(self, dummy=None):        
+    def update_two_by_two(self, dummy=None):#TODO needs to be updated to comply with other ways of saving    
         tbt_figure = self.analyzer.plot_2x2(ref_file='', medavg=self.medavg, xlims =[self.minWL,self.maxWL])
         tbt_buff = io.BytesIO()
         tbt_figure.savefig(tbt_buff)
@@ -136,21 +135,19 @@ class grism_web:
     @use_scope('spectrum_section')
     def update_spectrum(self, dummy=None):   
         spectrum_figure = self.analyzer.plot_spectrum(calibrated = True, plot_lines = self.lines,title='', medavg = self.medavg, xlims = [self.minWL, self.maxWL])
-        spectrum_buf = io.BytesIO()
-        spectrum_figure.savefig(spectrum_buf)
+        spectrum_figure.savefig('./temp/spectrum.png')
         clear(scope='spectrum_section')
-        put_image(spectrum_buf.getvalue())
+        put_image(open('./temp/spectrum.png', 'rb').read())
 
     @use_scope('gauss_section')
     def update_gauss(self, dummy=None):
         gauss_figure, popt = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = self.emission)
-        gauss_buf = io.BytesIO()
-        gauss_figure.savefig(gauss_buf)
+        gauss_figure.savefig('./temp/gauss.png')
         clear(scope='gauss_section')
-        put_image(gauss_buf.getvalue())
+        put_image(open('./temp/gauss.png', 'rb').read())
 
     @use_scope('rectified_section')
-    def update_rectified(self, dummy = None):
+    def update_rectified(self, dummy = None):#TODO needs to be updated to comply with other ways of saving
         rectified_figure = self.analyzer.plot_rectified_spectrum(self.temperature,wavemin=self.minWL,wavemax=self.maxWL)
         rectified_buff = io.BytesIO()
         rectified_figure.savefig(rectified_buff)
@@ -162,6 +159,20 @@ class grism_web:
         #popup("Dowloading Placeholder")
         content = open('./temp/Grism.pdf', 'rb').read()  
         session.download("Grism.pdf",content)
+
+    def dowload_pngs(self):            
+        content = open('./temp/grism.png', 'rb').read()
+        session.download("grism.png",content)
+
+        content = open('./temp/strip.png', 'rb').read()
+        session.download("strip.png",content)
+
+        content = open('./temp/spectrum.png', 'rb').read()
+        session.download("spectrum.png",content)
+
+        content = open('./temp/gauss.png', 'rb').read()
+        session.download("gauss.png",content)
+
 
 
     def get_fits(self):
@@ -233,6 +244,7 @@ class grism_web:
         self.update_gauss()#put gauss
 
         put_button("Dowload PDF", onclick=self.dowload_pdf);
+        put_button("Dowload PNGs of All Plots", onclick=self.dowload_pngs);
         #4/6/2022 - commented out twoby two and rectified to decrease complication and prepare program in time
         """
         self.update_two_by_two()
