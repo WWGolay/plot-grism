@@ -7,7 +7,7 @@ prototype updated last Mar 30th 2022
 import io
 #from turtle import width
 from pywebio.input import file_upload, input_group, NUMBER
-from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button,put_html
+from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button,put_html,put_collapse
 from pywebio.pin import *
 from pywebio import config,start_server,session
 import pywebio.input as pywebio_input
@@ -45,6 +45,14 @@ class grism_web:
         self.gaussMaxWl = 661
         self.emission_check_box_dict = [{'label':'Emission', 'value':1, 'selected':False}]
         self.emission = 0
+
+        #saved images
+        self.grism_buff = None
+        self.spectrum_buff = None
+        self.strip_buff = None
+        self.gauss_buff = None
+        self.twoxtwo_buff = None
+        self.rectified_buff = None
 
     def raise_calibration_error(self):
         popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER")
@@ -110,70 +118,72 @@ class grism_web:
 
     @use_scope('fits_section')
     def update_fits(self, dummy="dummy"):
-        fits_figure = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
-        fits_figure.savefig('./temp/grism.png')
+        self.grism_buff = self.analyzer.plot_image(figsize=(10,10), cmap='gray')    
         clear(scope='fits_section')
-        put_image(open('./temp/grism.png', 'rb').read())
+        put_image(self.grism_buff.getvalue())
 
     @use_scope('strip_section')
     def update_strip(self, dummy=None):
         if self.stripHeight != -1 and self.stripCenter != -1:
             self.analyzer.apply_calibration("test", self.stripHeight, self.stripCenter)        
-        strip_figure = self.analyzer.plot_strip(cmap='jet')
-        strip_figure.savefig('./temp/strip.png')
+        self.strip_buff = self.analyzer.plot_strip(cmap='jet')
         clear(scope='strip_section')
-        put_image(open('./temp/strip.png', 'rb').read())
+        put_image(self.strip_buff.getvalue())
 
     @use_scope('2b2_section')
     def update_two_by_two(self, dummy=None):#TODO needs to be updated to comply with other ways of saving    
-        tbt_figure = self.analyzer.plot_2x2(ref_file='', medavg=self.medavg, xlims =[self.minWL,self.maxWL])
-        tbt_buff = io.BytesIO()
-        tbt_figure.savefig(tbt_buff)
+        self.twoxtwo_buff = self.analyzer.plot_2x2(ref_file='', medavg=self.medavg, xlims =[self.minWL,self.maxWL])
         clear(scope='2b2_section')
-        put_image(tbt_buff.getvalue())                   
+        put_image(self.twoxtwo_buff.getvalue())                   
 
     @use_scope('spectrum_section')
     def update_spectrum(self, dummy=None):   
-        spectrum_figure = self.analyzer.plot_spectrum(calibrated = True, plot_lines = self.lines,title='', medavg = self.medavg, xlims = [self.minWL, self.maxWL])
-        spectrum_figure.savefig('./temp/spectrum.png')
+        self.spectrum_buff = self.analyzer.plot_spectrum(calibrated = True, plot_lines = self.lines,title='', medavg = self.medavg, xlims = [self.minWL, self.maxWL])
         clear(scope='spectrum_section')
-        put_image(open('./temp/spectrum.png', 'rb').read())
+        put_image(self.spectrum_buff.getvalue())
 
     @use_scope('gauss_section')
     def update_gauss(self, dummy=None):
-        gauss_figure, popt = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = self.emission)
-        gauss_figure.savefig('./temp/gauss.png')
+        self.gauss_buff = self.analyzer.fit_gaussian(self.gaussMinWl,self.gaussMaxWl, emission = self.emission)
         clear(scope='gauss_section')
-        put_image(open('./temp/gauss.png', 'rb').read())
+        put_image(self.gauss_buff.getvalue())
 
     @use_scope('rectified_section')
     def update_rectified(self, dummy = None):#TODO needs to be updated to comply with other ways of saving
-        rectified_figure = self.analyzer.plot_rectified_spectrum(self.temperature,wavemin=self.minWL,wavemax=self.maxWL)
-        rectified_buff = io.BytesIO()
-        rectified_figure.savefig(rectified_buff)
+        self.rectified_buff = self.analyzer.plot_rectified_spectrum(self.temperature,wavemin=self.minWL,wavemax=self.maxWL)         
         clear(scope='rectified_section')
-        put_image(rectified_buff.getvalue())       
+        put_image(self.rectified_buff.getvalue())     
 
     def dowload_pdf(self):
         self.analyzer.get_pdf(self.lines,self.medavg,self.minWL,self.maxWL,self.gaussMinWl, self.gaussMaxWl,self.emission)
-        #popup("Dowloading Placeholder")
         content = open('./temp/Grism.pdf', 'rb').read()  
         session.download("Grism.pdf",content)
 
+    def download_grism(self):
+        session.download("grism.png", self.grism_buff.getvalue())
+
+    def download_strip(self):
+        session.download("strip.png", self.strip_buff.getvalue())      
+
+    def download_spectrum(self):
+        session.download("spectrum.png", self.spectrum_buff.getvalue())
+
+    def download_gauss(self):
+        session.download("gauss.png", self.gauss_buff.getvalue())
+
+    def download_rectified(self):
+        session.download("rectified.png", self.rectified_buff.getvalue())
+
+    def download_2b2(self):
+        session.download("2b2.png", self.twoxtwo_buff.getvalue())
+
     def dowload_pngs(self):            
-        content = open('./temp/grism.png', 'rb').read()
-        session.download("grism.png",content)
-
-        content = open('./temp/strip.png', 'rb').read()
-        session.download("strip.png",content)
-
-        content = open('./temp/spectrum.png', 'rb').read()
-        session.download("spectrum.png",content)
-
-        content = open('./temp/gauss.png', 'rb').read()
-        session.download("gauss.png",content)
-
-
+        self.download_grism()
+        self.download_strip()
+        self.download_spectrum()
+        self.download_gauss()
+        self.download_rectified()
+        self.download_2b2()
 
     def get_fits(self):
         fits_input = [
@@ -198,7 +208,10 @@ class grism_web:
         put_image(logo, height="20%", width="50%")     
         put_html("<h1>Grism Analysis Results</h1>")
         put_html("<h3>Image</h3>")
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
         self.update_fits()#put fits image
+        put_button("Download Grism PNG", onclick=self.download_grism)#grism Image PNG Download
+
         """4/6/2022 Removed for initial draft to simplify 
         pywebio_pin.put_input(label="Manual Strip Height", name = "stripHeight", type=NUMBER)
         pywebio_pin.pin_on_change(name="stripHeight", onchange=self.update_strip_height)
@@ -207,6 +220,7 @@ class grism_web:
         put_button("Execute Manual Strip Calibration", onclick=self.update_strip)
         """        
         self.update_strip()
+        put_button("Download Strip PNG", onclick=self.download_strip)#Strip Image PNG Download
 
         put_html("<h3>Spectrum</h3>")   
         pywebio_pin.put_checkbox(label="Plot Lines", name="plotLines", options=self.lines_checkbox_dict)#pin spectrum options
@@ -218,22 +232,24 @@ class grism_web:
         pywebio_pin.pin_on_change(name="medavg", onchange=self.update_med_avg)
         pywebio_pin.pin_on_change(name="medavg", onchange=self.update_spectrum)
 
-        pywebio_pin.put_slider(label="Minimum Wavelength", name="minWL", value= self.minWL, min_value= 0, max_value = 1000, step = 5)#pin gauss options
+        pywebio_pin.put_slider(label="Minimum Wavelength", name="minWL", value= self.minWL, min_value= self.minWL, max_value = self.maxWL, step = 5)#pin gauss options
         pywebio_pin.pin_on_change(name="minWL", onchange=self.update_lower_wl)
         pywebio_pin.pin_on_change(name="minWL", onchange=self.update_spectrum)
 
-        pywebio_pin.put_slider(label="Maximum Wavelength", name="maxWL", value= self.maxWL, min_value= 0, max_value = 1000, step = 5)
+        pywebio_pin.put_slider(label="Maximum Wavelength", name="maxWL", value= self.maxWL, min_value= self.minWL, max_value = self.maxWL, step = 5)
         pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_upper_wl)
-        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_spectrum)
+        pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_spectrum)        
 
         self.update_spectrum(self.lines)#put spectrum
 
+        put_button("Download Spectrum PNG", onclick=self.download_spectrum)#Spectrum Image PNG Download
+
         put_html("<h3>Gaussian Filter</h3>")        
-        pywebio_pin.put_slider(label="Minimum Gauss Wavelength", name="minGauss", value= self.gaussMinWl, min_value= 0, max_value = 1000, step = 1)#pin gauss options
+        pywebio_pin.put_slider(label="Minimum Gauss Wavelength", name="minGauss", value= self.gaussMinWl, min_value= self.minWL, max_value = self.maxWL, step = 1)#pin gauss options
         pywebio_pin.pin_on_change(name="minGauss", onchange=self.update_gauss_min)
         pywebio_pin.pin_on_change(name="minGauss", onchange=self.update_gauss)
 
-        pywebio_pin.put_slider(label="Maximum Gauss Wavelength", name="maxGauss", value= self.gaussMaxWl, min_value= 0, max_value = 1000, step = 1)
+        pywebio_pin.put_slider(label="Maximum Gauss Wavelength", name="maxGauss", value= self.gaussMaxWl, min_value= self.minWL, max_value = self.maxWL, step = 1)
         pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss_max)
         pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss)
 
@@ -242,17 +258,23 @@ class grism_web:
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_gauss)
         
         self.update_gauss()#put gauss
-
-        put_button("Dowload PDF", onclick=self.dowload_pdf);
-        put_button("Dowload PNGs of All Plots", onclick=self.dowload_pngs);
-        #4/6/2022 - commented out twoby two and rectified to decrease complication and prepare program in time
-        """
+        put_button("Download Gauss PNG", onclick=self.download_gauss)#Gauss Image PNG Download
+        
         self.update_two_by_two()
 
-        self.update_rectified()
+        put_button("Download 2x2 PNG", onclick=self.download_2b2)#Gauss Image PNG Download
+
         pywebio_pin.put_input(label="Temperature (K)", name = "temper", type=NUMBER, placeholder=10000)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_temperature)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_rectified)
-        """
-        #This replaces the option for another fits image, which is simpler and gets rid of the annoying anchor
+
+        self.update_rectified()
+
+        put_button("Download Rectified PNG", onclick=self.download_rectified)#Gauss Image PNG Download
+
+        
+        put_html("</hr><h4>Dowload All Images</h4>")
+        put_button("Dowload PDF", onclick=self.dowload_pdf);
+        put_button("Dowload PNGs of All Plots", onclick=self.dowload_pngs)
+
         session.hold()               

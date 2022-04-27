@@ -6,6 +6,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess; from scipy.interp
 from scipy.signal import medfilt, medfilt2d,find_peaks; from scipy.optimize import curve_fit
 from datetime import datetime; import matplotlib.pyplot as plt, matplotlib as mpl; import sys
 from matplotlib.backends.backend_pdf import PdfPages
+import io
 
 plt.switch_backend('Agg')
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler('color', ['#377eb8', '#4daf4a', '#e41a1c', '#dede00', '#ff7f00', '#999999', '#984ea3', '#f781bf', '#a65628'])
@@ -237,7 +238,9 @@ class grism_tools:
             ax.set_xlabel('Pixel nr.')
             ax.grid()
         
-        return fig
+        spectrum_buff = io.BytesIO()
+        fig.savefig(spectrum_buff)
+        return spectrum_buff
 
     
     def plot_2x2(self, ref_file='', medavg = 1,xlims =[380,680]):
@@ -295,7 +298,9 @@ class grism_tools:
             ax4.set_title('Reference spectrum')
             ax4.grid()
         
-        return fig
+        twoxtwo = io.BytesIO()
+        fig.savefig(twoxtwo)
+        return twoxtwo
     
     '''Plot spectrum normalize by blackbody (Planck function)'''
     def plot_rectified_spectrum(self,T,wavemin=385,wavemax=700):
@@ -332,7 +337,10 @@ class grism_tools:
         ax3.set_ylim(0.0,1.4)
         ax3.set_xlim(wavemin,wavemax)
         ax3.grid()
-        return fig  
+
+        rectified_buff = io.BytesIO()
+        fig.savefig(rectified_buff)
+        return rectified_buff  
 
     '''Plot image: defaults to full image '''
     def plot_image(self,title='',im = np.array([]), figsize =(10,10),cmap='gray'):
@@ -344,7 +352,9 @@ class grism_tools:
         #fig.colorbar(myplot)
         if title == '': title = self.title
         plt.title(title)
-        return fig
+        image_buff = io.BytesIO()
+        fig.savefig(image_buff)
+        return image_buff
     
     '''Plot strip image'''
     def plot_strip(self,cmap='jet', title = '', figsize=(10,3)):
@@ -353,7 +363,9 @@ class grism_tools:
         myplot = ax.imshow(im,cmap=cmap, vmin= np.average(im)-np.std(im), vmax = np.average(im)+4*np.std(im))
         if title == '': title = '%s\n Dispersed strip image' % self.title
         plt.title(title)
-        return fig
+        strip_buff = io.BytesIO()
+        fig.savefig(strip_buff)
+        return strip_buff
 
     def clip_spectrum(self,wave,spectrum, wave_min,wave_max):
         # Clips spectrum to user-specified wavelength [or pixel] range    
@@ -418,7 +430,11 @@ class grism_tools:
         ax.set_xlabel('Wavelength [nm]')
         ax.set_ylabel('Normalized amplitude')
         ax.grid()
-        return fig,popt
+
+        #NOTE POPT is unused in this version and is therefore not returned
+        gauss_buff = io.BytesIO()
+        fig.savefig(gauss_buff)        
+        return gauss_buff
     
     def rotate_image(self,box,width):
         '''Fit linear slope to maximum y values in cropped image'''
