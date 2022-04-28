@@ -1,0 +1,14 @@
+numpy
+scipy
+astropy
+statsmodels
+ccdproc
+datetime
+matplotlib
+webbrowser
+subprocess
+glob
+sys
+os
+tkinter
+PIL
