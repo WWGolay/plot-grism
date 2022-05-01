@@ -21,7 +21,7 @@ def main():
 
     web_analyzer = grism_web()
     default_temp_dir = cfg.get('default', 'default_temp_dir')
-    take_input = False#cfg.get('default', 'take_input')
+    take_input = True #cfg.get('default', 'take_input')
     if take_input:
         #fits_image, calibration = web_analyzer.get_fits(web_analyzer) # Get initial fits image
         fits_image, calibration = web_analyzer.get_fits() # Get initial fits image

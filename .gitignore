@@ -128,4 +128,6 @@ dmypy.json
 .pyre/
 
 # Custom
-temp/temp.fts
+temp/im.fts
+temp/cal.csv
+temp/Grism.pdf
