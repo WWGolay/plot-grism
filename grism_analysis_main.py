@@ -1,9 +1,10 @@
 '''
 grism_analysis_main
 
-prototype edited Mar 27th 2022 - AS
-last updated 7 Apr 2022 - WG
-
+Last Updated 5/2/22
+University Of Iowa Astronomy Department
+AJ Serck
+Will Golay
 '''
 
 # Python imports
@@ -22,14 +23,10 @@ def main():
     defaultDir = cfg.get('default', 'default_calibration_dir')
     day_iter = int(cfg.get('default', 'find_calib_by_date'))
     take_input = bool(cfg.get('default', 'take_input')=='True')
-
-    web_analyzer = grism_web()
-<<<<<<< Updated upstream
-=======
     default_temp_dir = cfg.get('default', 'default_temp_dir')
     path_to_fits = default_temp_dir
     take_input = False#cfg.get('default', 'take_input')
->>>>>>> Stashed changes
+    web_analyzer = grism_web()
     if take_input:
         fits_image, calibration,path = web_analyzer.get_fits() # Get initial fits image
         print("PATH:" + path)
