@@ -57,14 +57,6 @@ class grism_web:
     def raise_calibration_error(self):
         popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER")
 
-    """Removed 4/6/2022 to simplify program and remove anchored dropdown
-    def resubmit_grism_image(self, img):
-        with open('temp/temp.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
-            binary_file.write(img['content'])
-        grism_analyzer = grism_tools('temp/temp.fts', self.analyzer.get_calib())
-        self.run_analysis(self, grism_analyzer)
-    """
-
     def update_med_avg(self, med_avg):
         m = med_avg
         if(m is None):
@@ -155,27 +147,57 @@ class grism_web:
         put_image(self.rectified_buff.getvalue())     
 
     def dowload_pdf(self):
-        self.analyzer.get_pdf(self.lines,self.medavg,self.minWL,self.maxWL,self.gaussMinWl, self.gaussMaxWl,self.emission)
+        self.analyzer.get_pdf(fits = True, strip=True,spectrum=True,gauss=True,rectified=True,twoxtwo=True)
         content = open('./temp/Grism.pdf', 'rb').read()  
         session.download("Grism.pdf",content)
 
     def download_grism(self):
         session.download("grism.png", self.grism_buff.getvalue())
 
+    def download_grism_pdf(self):
+        self.analyzer.get_pdf(fits=True)
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("Fits_Image.pdf",content)
+
     def download_strip(self):
-        session.download("strip.png", self.strip_buff.getvalue())      
+        session.download("strip.png", self.strip_buff.getvalue())   
+
+    def download_strip_pdf(self):
+        self.analyzer.get_pdf(strip=True)
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("Strip_Image.pdf",content)
 
     def download_spectrum(self):
         session.download("spectrum.png", self.spectrum_buff.getvalue())
 
+    def download_spectrum_pdf(self):
+        self.analyzer.get_pdf(spectrum=True)
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("Spectrum.pdf",content)
+
     def download_gauss(self):
         session.download("gauss.png", self.gauss_buff.getvalue())
+
+    def download_gauss_pdf(self):
+        self.analyzer.get_pdf(gauss=True)
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("Gauss.pdf",content)
 
     def download_rectified(self):
         session.download("rectified.png", self.rectified_buff.getvalue())
 
+    def download_rectified_pdf(self):
+        self.analyzer.get_pdf(rectified=True)
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("Rectified.pdf",content)
+
     def download_2b2(self):
         session.download("2b2.png", self.twoxtwo_buff.getvalue())
+
+    def download_2b2_pdf(self):
+        self.analyzer.get_pdf(twoxtwo=True)
+        content = open('./temp/Grism.pdf', 'rb').read()  
+        session.download("TwoByTwo.pdf",content)
 
     def dowload_pngs(self):            
         self.download_grism()
@@ -187,19 +209,27 @@ class grism_web:
 
     def get_fits(self):
         fits_input = [
-        pywebio_input.file_upload("Select a .fts file to analyze",name="fits", accept=[".fts",".fits",".fit"], required=True),#Fits image file select
-        #pywebio_input.file_upload("(Advanced) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
-        ]
+        pywebio_input.file_upload("Select a .fts/.fit/.fits file to analyze",name="fits", accept=[".fts",".fits",".fit"], required=True),#Fits image file select                
+        pywebio_input.input("Path to Image", name = 'path', placeholder = "Path Like C:\\Users\\AJ\\Documents\\img001.fts", required = False),
+        pywebio_input.file_upload("(Advanced, Not Required) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
+        ]         
         form_ans=input_group("Select a Fits image to analyze", fits_input)
         fits = form_ans['fits']
-        #cal = form_ans['cal']
-        return fits,None
+        path = form_ans['path']                
+        cal = form_ans['cal']
+        return fits,cal,path
+
+    #The HTML formated string to place at the header to put object info
+    def get_object_info_string(self):
+        object, telescope, date, filter = self.analyzer.get_object_info()
+        return "<h3> Object: %s<br>Telescope: %s<br>Observation Date: %s<br>Filter: %s</h3>" % (object,telescope,date,filter) 
 
     def run_analysis(self, grism_analyzer):
         self.analyzer = grism_analyzer #Copy analyzer from constructor
         
         #Updated defaults from calibration
         minwave, maxwave = grism_analyzer.wave_range()
+        self.update_emission(grism_analyzer.get_emission())
         self.update_lower_wl(minwave)
         self.update_upper_wl(maxwave)
 
@@ -207,22 +237,30 @@ class grism_web:
         logo = open('./images/UILogoTransparent.png', 'rb').read()  
         put_image(logo, height="20%", width="50%")     
         put_html("<h1>Grism Analysis Results</h1>")
-        put_html("<h3>Image</h3>")
-        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_html(self.get_object_info_string())
+        
+        #Raw Image Section
+        put_html("<h3>Raw Image</h3>")        
         self.update_fits()#put fits image
-        put_button("Download Grism PNG", onclick=self.download_grism)#grism Image PNG Download
-
-        """4/6/2022 Removed for initial draft to simplify 
-        pywebio_pin.put_input(label="Manual Strip Height", name = "stripHeight", type=NUMBER)
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_collapse("Advanced",[put_button("Download Grism PDF", onclick=self.download_grism_pdf),
+                                put_button("Download Grism PNG", onclick=self.download_grism),
+                                pywebio_pin.put_input(label="Manual Strip Height", name = "stripHeight", type=NUMBER),
+                                pywebio_pin.put_input(label="Manual Strip Center", name = "stripCenter", type=NUMBER),
+                                put_button("Execute Manual Strip Calibration", onclick=self.update_strip)])
+    
         pywebio_pin.pin_on_change(name="stripHeight", onchange=self.update_strip_height)
-        pywebio_pin.put_input(label="Manual Strip Center", name = "stripCenter", type=NUMBER)
         pywebio_pin.pin_on_change(name="stripCenter", onchange=self.update_strip_center)
-        put_button("Execute Manual Strip Calibration", onclick=self.update_strip)
-        """        
+     
+        #Strip Image Section
+        put_html("</hr><h3>Strip Image</h3>")
         self.update_strip()
-        put_button("Download Strip PNG", onclick=self.download_strip)#Strip Image PNG Download
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_collapse("Advanced",[put_button("Download Strip PNG", onclick=self.download_strip),
+                                put_button("Download Strip PDF", onclick=self.download_strip_pdf)])
 
-        put_html("<h3>Spectrum</h3>")   
+        #Spectrum Section
+        put_html("<hr><h3>Spectrum</h3>")   
         pywebio_pin.put_checkbox(label="Plot Lines", name="plotLines", options=self.lines_checkbox_dict)#pin spectrum options
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_lines)
         pywebio_pin.pin_on_change(name="plotLines", onchange=self.update_spectrum)
@@ -241,8 +279,9 @@ class grism_web:
         pywebio_pin.pin_on_change(name="maxWL", onchange=self.update_spectrum)        
 
         self.update_spectrum(self.lines)#put spectrum
-
-        put_button("Download Spectrum PNG", onclick=self.download_spectrum)#Spectrum Image PNG Download
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_collapse("Advanced",[put_button("Download Spectrum PNG", onclick=self.download_spectrum),
+                                put_button("Download Spectrum PDF", onclick=self.download_spectrum_pdf)])                
 
         put_html("<h3>Gaussian Filter</h3>")        
         pywebio_pin.put_slider(label="Minimum Gauss Wavelength", name="minGauss", value= self.gaussMinWl, min_value= self.minWL, max_value = self.maxWL, step = 1)#pin gauss options
@@ -258,19 +297,24 @@ class grism_web:
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_gauss)
         
         self.update_gauss()#put gauss
-        put_button("Download Gauss PNG", onclick=self.download_gauss)#Gauss Image PNG Download
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_collapse("Advanced",[put_button("Download Gauss PNG", onclick=self.download_gauss),
+                                put_button("Download Gauss PDF", onclick=self.download_gauss_pdf)])                 
         
         self.update_two_by_two()
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_collapse("Advanced",[put_button("Download 2x2 PNG", onclick=self.download_2b2),
+                                put_button("Download 2x2 PDF", onclick=self.download_2b2_pdf)])        
 
-        put_button("Download 2x2 PNG", onclick=self.download_2b2)#Gauss Image PNG Download
-
-        pywebio_pin.put_input(label="Temperature (K)", name = "temper", type=NUMBER, placeholder=10000)
+        pywebio_pin.put_slider(label="Temperature (K)", name="temper", value= 10000, min_value= 0, max_value = 20000, step = 100)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_temperature)
         pywebio_pin.pin_on_change(name="temper", onchange=self.update_rectified)
 
         self.update_rectified()
-
-        put_button("Download Rectified PNG", onclick=self.download_rectified)#Gauss Image PNG Download
+        put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
+        put_collapse("Advanced",[put_button("Download Rectified PNG", onclick=self.download_rectified),
+                                put_button("Download Rectified PDF", onclick=self.download_rectified_pdf)]) 
+        
 
         
         put_html("</hr><h4>Dowload All Images</h4>")

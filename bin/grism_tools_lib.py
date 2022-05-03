@@ -238,6 +238,7 @@ class grism_tools:
             ax.set_xlabel('Pixel nr.')
             ax.grid()
         
+        self.spectrum_figure = fig
         spectrum_buff = io.BytesIO()
         fig.savefig(spectrum_buff)
         return spectrum_buff
@@ -298,6 +299,7 @@ class grism_tools:
             ax4.set_title('Reference spectrum')
             ax4.grid()
         
+        self.twoxtwo_figure = fig
         twoxtwo = io.BytesIO()
         fig.savefig(twoxtwo)
         return twoxtwo
@@ -338,6 +340,7 @@ class grism_tools:
         ax3.set_xlim(wavemin,wavemax)
         ax3.grid()
 
+        self.rectified_figure = fig
         rectified_buff = io.BytesIO()
         fig.savefig(rectified_buff)
         return rectified_buff  
@@ -352,6 +355,7 @@ class grism_tools:
         #fig.colorbar(myplot)
         if title == '': title = self.title
         plt.title(title)
+        self.fits_figure = fig
         image_buff = io.BytesIO()
         fig.savefig(image_buff)
         return image_buff
@@ -363,6 +367,7 @@ class grism_tools:
         myplot = ax.imshow(im,cmap=cmap, vmin= np.average(im)-np.std(im), vmax = np.average(im)+4*np.std(im))
         if title == '': title = '%s\n Dispersed strip image' % self.title
         plt.title(title)
+        self.strip_figure = fig
         strip_buff = io.BytesIO()
         fig.savefig(strip_buff)
         return strip_buff
@@ -432,9 +437,14 @@ class grism_tools:
         ax.grid()
 
         #NOTE POPT is unused in this version and is therefore not returned
+        self.gauss_figure = fig
         gauss_buff = io.BytesIO()
         fig.savefig(gauss_buff)        
         return gauss_buff
+
+    def get_emission(self):#TODO Implement
+        return True
+
     
     def rotate_image(self,box,width):
         '''Fit linear slope to maximum y values in cropped image'''
@@ -538,11 +548,23 @@ class grism_tools:
         return self.cal_file
 
     #Note 4/11/21, parameters will need to be updated with other plots, or restructuring to make them pull from self. parameters.
-    def get_pdf(self,lines,medavg,minSpectrum,maxSpectrum,minGauss,maxGauss,emission):
+    #def get_pdf(self,lines,medavg,minSpectrum,maxSpectrum,minGauss,maxGauss,emission):
+    def get_pdf(self,fits = False, strip=False,spectrum=False,gauss=False,rectified=False,twoxtwo=False):
         pages = PdfPages("./temp/Grism.pdf")
-        pages.savefig(self.plot_image(figsize=(10,10), cmap='gray'))            
-        pages.savefig(self.plot_strip(cmap='jet'))            
-        pages.savefig(self.plot_spectrum(calibrated = True, plot_lines = lines,title='', medavg = medavg, xlims = [minSpectrum, maxSpectrum]))  
-        pages.savefig(self.fit_gaussian(minGauss,maxGauss,emission)[0])#Use [0] at end because fit_gaussian returns tuple
-        pages.close()        
+        if fits:
+            pages.savefig(self.fits_figure)
+        if strip:
+            pages.savefig(self.strip_figure)     
+        if spectrum:
+            pages.savefig(self.spectrum_figure)
+        if gauss:
+            pages.savefig(self.gauss_figure)
+        if rectified:
+            pages.savefig(self.rectified_figure)
+        if twoxtwo:
+            pages.savefig(self.twoxtwo_figure) 
+        pages.close()      
+
+    def get_object_info(self):
+        return self.object, self.telescope, self.utdate, self.filter
               
