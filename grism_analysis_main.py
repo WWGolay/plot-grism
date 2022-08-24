@@ -1,7 +1,7 @@
 '''
 grism_analysis_main
 
-Last Updated 5/2/22
+Last Updated 8/24/22
 University Of Iowa Astronomy Department
 AJ Serck
 Will Golay
