@@ -5,6 +5,7 @@ Last Updated 8/24/22
 University Of Iowa Astronomy Department
 AJ Serck
 Will Golay
+Jack Kelley
 '''
 
 # Python imports
