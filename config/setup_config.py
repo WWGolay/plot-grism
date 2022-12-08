@@ -8,7 +8,7 @@ def read(config_file):
 
     try:
         config = configparser.RawConfigParser()   
-        config.read(os.path.dirname(os.path.abspath(__file__))+'/'+config_file)
+        config.read(config_file)
     except Exception as ex:
         raise Exception("Error parsing config file '%s'" % config_file, ex)
 

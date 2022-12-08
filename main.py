@@ -20,14 +20,13 @@ from bin.grism_tools_lib import grism_tools
 from config import setup_config
 
 def main():
-    cfg = setup_config.read('plot-grism.cfg')
-    default_temp_dir = cfg.get('default', 'default_temp_dir')
-    defaultDir = cfg.get('default', 'default_calibration_dir')
+    home_path = os.path.dirname(os.path.abspath(__file__))+'/'
+    cfg = setup_config.read(home_path+'config/plot-grism.cfg')
+    default_temp_dir = home_path + cfg.get('default', 'default_temp_dir')
+    defaultDir = home_path + cfg.get('default', 'default_calibration_dir')
     day_iter = int(cfg.get('default', 'find_calib_by_date'))
     take_input = bool(cfg.get('default', 'take_input')=='True')
-    default_temp_dir = cfg.get('default', 'default_temp_dir')
     path_to_fits = default_temp_dir
-    take_input = bool(cfg.get('default', 'take_input')=='True')
     web_analyzer = grism_web()
     if take_input:
         fits_image, calibration, path = web_analyzer.get_fits() # Get initial fits image
