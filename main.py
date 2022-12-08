@@ -64,8 +64,8 @@ def main():
     try:
         grism_analyzer = grism_tools(path_to_fits, cal_file) # instantiate analyzer with fits image and calibration file
         web_analyzer.run_analysis(grism_analyzer)
-    except:
-        web_analyzer.raise_calibration_error()
+    except Exception as e:
+        web_analyzer.raise_calibration_error(e)
 
 if __name__ == '__main__':
     main()
