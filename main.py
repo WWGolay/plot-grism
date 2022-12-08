@@ -53,7 +53,7 @@ def main():
                         break
                     else: continue
                 else:
-                    web_analyzer.raise_error('No calibration file found for this image')
+                    web_analyzer.raise_error('No calibration file found for this great image')
                     return
             else:
                 web_analyzer.raise_error('No calibration file found for this image')
