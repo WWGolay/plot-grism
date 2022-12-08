@@ -25,7 +25,7 @@ as a parameter, but this isn't useful (some plots use multiple parameters) so a 
 """
 class grism_web:
     def __init__(self):
-        config(theme='minty', title="Iowa Grism Analysis")
+        config(theme='dark', title="Iowa Grism Analysis")
         self.lines_checkbox_dict=[
             {'label':'Hydrogen (Balmer)', 'value':'H', 'selected':True},
             {'label':'Helium', 'value':'He'},
@@ -43,8 +43,6 @@ class grism_web:
         self.stripCenter = -1
         self.gaussMinWl = 651
         self.gaussMaxWl = 661
-        self.emission_check_box_dict = [{'label':'Emission', 'value':1, 'selected':False}]
-        self.emission = 0
 
         #saved images
         self.grism_buff = None
@@ -251,7 +249,7 @@ class grism_web:
     
         pywebio_pin.pin_on_change(name="stripHeight", onchange=self.update_strip_height)
         pywebio_pin.pin_on_change(name="stripCenter", onchange=self.update_strip_center)
-     
+
         #Strip Image Section
         put_html("</hr><h3>Strip Image</h3>")
         self.update_strip()
@@ -292,10 +290,11 @@ class grism_web:
         pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss_max)
         pywebio_pin.pin_on_change(name="maxGauss", onchange=self.update_gauss)
 
-        pywebio_pin.put_checkbox(label="Emission Line", name="emission", options=self.emission_check_box_dict)
+        pywebio_pin.put_checkbox(label="Emission Line", name="emission", options={'label':'Emission', 'value':True, 'selected':False})
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_emission)
         pywebio_pin.pin_on_change(name="emission", onchange=self.update_gauss)
-        
+
+        self.emission = False
         self.update_gauss()#put gauss
         put_collapse("Help","This is the grism image. Placing more text here would not be that hard")
         put_collapse("Advanced",[put_button("Download Gauss PNG", onclick=self.download_gauss),
