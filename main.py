@@ -30,7 +30,6 @@ def main():
     web_analyzer = grism_web()
     if take_input:
         fits_image, calibration, path = web_analyzer.get_fits() # Get initial fits image
-        print("PATH:" + path)
         if path != "":
             path_to_fits = path
         else:            
