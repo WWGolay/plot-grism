@@ -12,7 +12,6 @@ from pywebio.pin import *
 from pywebio import config,start_server,session
 import pywebio.input as pywebio_input
 import pywebio.pin as pywebio_pin
-import io
 import matplotlib.pyplot as plt
 from bin.grism_tools_lib import grism_tools
 """

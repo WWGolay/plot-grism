@@ -29,46 +29,47 @@ def main():
     take_input = bool(cfg.get('default', 'take_input')=='True')
     path_to_fits = default_temp_dir
     web_analyzer = grism_web(default_temp_dir, default_image_dir)
-    if take_input:
-        fits_image, calibration = web_analyzer.get_fits() # Get initial fits image
-        if fits_image != None:           
-            with open(default_temp_dir+'im.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
-                binary_file.write(fits_image['content'])
-                path_to_fits += 'im.fts'
-        else:
-            path_to_fits = default_image_dir + 'sample.fts'
-    
-        if calibration == None: 
-            
-            # Get date of image to iterate back to latest calibration file, parse header into date object
-            hdulist = pyfits.open(path_to_fits)
-            fitsDate = hdulist[0].header['DATE-OBS']
-            startDate = date(int(fitsDate[0:4]), int(fitsDate[5:7]), int(fitsDate[8:10]))
-            
-            # Iterate to find latest calib file in last n days
-            if day_iter > 0:
-                for testDate in (startDate - timedelta(n) for n in range(day_iter)):
-                    if os.path.isfile(default_calibration_dir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'):
-                        cal_file = default_calibration_dir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'
-                        break
-                    else: continue
+    try:
+        if take_input:
+            fits_image, calibration = web_analyzer.get_fits() # Get initial fits image
+            if fits_image != None:           
+                with open(default_temp_dir+'im.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
+                    binary_file.write(fits_image['content'])
+                    path_to_fits += 'im.fts'
+            else:
+                path_to_fits = default_image_dir + 'sample.fts'
+        
+            if calibration == None: 
+                
+                # Get date of image to iterate back to latest calibration file, parse header into date object
+                hdulist = pyfits.open(path_to_fits)
+                fitsDate = hdulist[0].header['DATE-OBS']
+                startDate = date(int(fitsDate[0:4]), int(fitsDate[5:7]), int(fitsDate[8:10]))
+                
+                # Iterate to find latest calib file in last n days
+                if day_iter > 0:
+                    for testDate in (startDate - timedelta(n) for n in range(day_iter)):
+                        if os.path.isfile(default_calibration_dir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'):
+                            cal_file = default_calibration_dir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'
+                            break
+                        else: continue
+                    else:
+                        cal_file = default_temp_dir+'cal.csv'
                 else:
                     cal_file = default_temp_dir+'cal.csv'
+            elif calibration == 'sample':
+                cal_file = default_image_dir+'sample.csv'
             else:
-                cal_file = default_temp_dir+'cal.csv'
-        elif calibration == 'sample':
-            cal_file = default_image_dir+'sample.csv'
+                with open(default_temp_dir+'cal.csv', 'wb') as binary_file:
+                    binary_file.write(calibration['content'])
+                    cal_file = default_temp_dir+'cal.csv'
         else:
-            with open(default_temp_dir+'cal.csv', 'wb') as binary_file:
-                binary_file.write(calibration['content'])
-                cal_file = default_temp_dir+'cal.csv'
-    else:
-        path_to_fits += 'im.fts'
-        cal_file = default_temp_dir+'cal.csv'
+            path_to_fits += 'im.fts'
+            cal_file = default_temp_dir+'cal.csv'
 
-    try:
-        grism_analyzer = grism_tools(path_to_fits, cal_file) # instantiate analyzer with fits image and calibration file
-        web_analyzer.run_analysis(grism_analyzer)
+            grism_analyzer = grism_tools(path_to_fits, cal_file) # instantiate analyzer with fits image and calibration file
+            web_analyzer.run_analysis(grism_analyzer)
+            
     except Exception as e:
         web_analyzer.raise_error(e)
 
