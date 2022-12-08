@@ -54,6 +54,7 @@ def main():
                     else: continue
                 else:
                     web_analyzer.raise_error('No calibration file found for this image')
+                    return
             else:
                 web_analyzer.raise_error('No calibration file found for this image')
                 return
