@@ -27,14 +27,14 @@ def main():
     default_image_dir = home_path + cfg.get('default', 'default_image_dir')
     day_iter = int(cfg.get('default', 'find_calib_by_date'))
     take_input = bool(cfg.get('default', 'take_input')=='True')
-    path_to_fits = default_temp_dir
     web_analyzer = grism_web(default_temp_dir, default_image_dir)
+
     if take_input:
         fits_image, calibration = web_analyzer.get_fits() # Get initial fits image
         if fits_image != None:           
             with open(default_temp_dir+'im.fts', 'wb') as binary_file: # Write fits image to file so it can be analyzed
                 binary_file.write(fits_image['content'])
-                path_to_fits += 'im.fts'
+                path_to_fits = default_temp_dir+'im.fts'
         else:
             path_to_fits = default_image_dir + 'sample.fts'
     
@@ -55,7 +55,7 @@ def main():
                 else:
                     cal_file = default_temp_dir+'cal.csv'
             else:
-                cal_file = default_temp_dir+'cal.csv'
+                web_analyzer.raise_error('No calibration file found for this image')
         elif calibration == 'sample':
             cal_file = default_image_dir+'sample.csv'
         else:
