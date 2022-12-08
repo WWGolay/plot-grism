@@ -52,7 +52,7 @@ class grism_web:
         self.twoxtwo_buff = None
         self.rectified_buff = None
 
-    def rais_error(self, e):
+    def raise_error(self, e):
         popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER: %s" % e)
 
     def update_med_avg(self, med_avg):
