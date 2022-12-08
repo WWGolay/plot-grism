@@ -7,7 +7,7 @@ prototype updated last Mar 30th 2022
 import io
 #from turtle import width
 from pywebio.input import file_upload, input_group, NUMBER
-from pywebio.output import put_text, put_image, use_scope, put_button, popup, clear, put_button,put_html,put_collapse
+from pywebio.output import put_text, put_link, put_image, use_scope, put_button, popup, clear, put_button, put_html, put_collapse
 from pywebio.pin import *
 from pywebio import config,start_server,session
 import pywebio.input as pywebio_input
@@ -210,15 +210,22 @@ class grism_web:
 
     def get_fits(self):
         fits_input = [
-        pywebio_input.file_upload("Select a .fts/.fit/.fits file to analyze",name="fits", accept=[".fts",".fits",".fit"], required=True),#Fits image file select                
-        pywebio_input.input("Path to Image", name = 'path', placeholder = "Path Like C:\\Users\\AJ\\Documents\\img001.fts", required = False),
-        pywebio_input.file_upload("(Advanced, Not Required) Select a manual .csv calibration file (optional)", name="cal", accept=".csv", required=False)
-        ]         
+        pywebio_input.file_upload("Select a .fts/.fit/.fits file to analyze",name="fits", accept=[".fts",".fits",".fit"], required=False),#Fits image file select                
+        pywebio_input.file_upload("Select a .csv calibration file (optional)", name="cal", accept=".csv", required=False),
+        pywebio_input.actions('', [{'label':'Submit', 'value':False, 'type':'submit'}, 
+        {'label':'Reset', 'value':False, 'type':'reset', 'color':'info'}, 
+        {'label':'Use Sample Data', 'value':True, 'type':'submit', 'color':'warning'}], name='actions')]
         form_ans=input_group("Select a Fits image to analyze", fits_input)
-        fits = form_ans['fits']
-        path = form_ans['path']                
-        cal = form_ans['cal']
-        return fits,cal,path
+
+        if form_ans['actions'] == True: #If sample data is selected
+            fits = None
+            cal = 'sample'
+        elif form_ans['fits'] == None:
+            self.get_fits()
+        else:
+            fits = form_ans['fits']
+            cal = form_ans['cal']
+        return fits,cal
 
     #The HTML formated string to place at the header to put object info
     def get_object_info_string(self):
@@ -320,7 +327,7 @@ class grism_web:
 
         
         put_html("</hr><h4>Download All Images</h4>")
-        put_button("Download PDF", onclick=self.download_pdf);
+        put_button("Download PDF", onclick=self.download_pdf)
         put_button("Download PNGs of All Plots", onclick=self.download_pngs)
 
         session.hold()               
