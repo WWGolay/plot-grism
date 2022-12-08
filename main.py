@@ -53,9 +53,10 @@ def main():
                         break
                     else: continue
                 else:
-                    cal_file = default_temp_dir+'cal.csv'
+                    web_analyzer.raise_error('No calibration file found for this image')
             else:
                 web_analyzer.raise_error('No calibration file found for this image')
+                return
         elif calibration == 'sample':
             cal_file = default_image_dir+'sample.csv'
         else:
@@ -63,7 +64,7 @@ def main():
                 binary_file.write(calibration['content'])
                 cal_file = default_temp_dir+'cal.csv'
     else:
-        cal_file = default_temp_dir+'cal.csv'
+        cal_file = default_image_dir+'sample.csv'
 
     grism_analyzer = grism_tools(path_to_fits, cal_file) # instantiate analyzer with fits image and calibration file
     web_analyzer.run_analysis(grism_analyzer)
