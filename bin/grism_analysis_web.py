@@ -24,7 +24,7 @@ the sections and re-making the graphs. When calling these functions from the PIN
 as a parameter, but this isn't useful (some plots use multiple parameters) so a dummy parameter is used
 """
 class grism_web:
-    def __init__(self):
+    def __init__(self, default_temp_dir, default_image_dir):
         config(theme='dark', title="Iowa Grism Analysis")
         self.lines_checkbox_dict=[
             {'label':'Hydrogen (Balmer)', 'value':'H', 'selected':True},
@@ -52,8 +52,11 @@ class grism_web:
         self.twoxtwo_buff = None
         self.rectified_buff = None
 
+        self.default_temp_dir = default_temp_dir
+        self.default_image_dir = default_image_dir
+
     def raise_error(self, e):
-        popup("ERROR, CALIBRATION FILE NOT FOUND. MANUALLY UPLOAD OR CONTACT SOFTWARE MANAGER: %s" % e)
+        popup("ERROR, CONTACT SOFTWARE MANAGER WITH FOLLOWING ERROR MESSAGE: %s" % e)
 
     def update_med_avg(self, med_avg):
         m = med_avg
@@ -144,17 +147,17 @@ class grism_web:
         clear(scope='rectified_section')
         put_image(self.rectified_buff.getvalue())     
 
-    def dowload_pdf(self):
+    def download_pdf(self):
         self.analyzer.get_pdf(fits = True, strip=True,spectrum=True,gauss=True,rectified=True,twoxtwo=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
-        session.download("Grism.pdf",content)
+        content = open(self.default_temp_dir+'Grism.pdf', 'rb').read()  
+        session.download("grism.pdf",content)
 
     def download_grism(self):
         session.download("grism.png", self.grism_buff.getvalue())
 
     def download_grism_pdf(self):
         self.analyzer.get_pdf(fits=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
+        content = open(self.default_temp_dir+'grism.pdf', 'rb').read()  
         session.download("Fits_Image.pdf",content)
 
     def download_strip(self):
@@ -162,7 +165,7 @@ class grism_web:
 
     def download_strip_pdf(self):
         self.analyzer.get_pdf(strip=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
+        content = open(self.default_temp_dir+'grism.pdf', 'rb').read()  
         session.download("Strip_Image.pdf",content)
 
     def download_spectrum(self):
@@ -170,7 +173,7 @@ class grism_web:
 
     def download_spectrum_pdf(self):
         self.analyzer.get_pdf(spectrum=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
+        content = open(self.default_temp_dir+'Grism.pdf', 'rb').read()  
         session.download("Spectrum.pdf",content)
 
     def download_gauss(self):
@@ -178,7 +181,7 @@ class grism_web:
 
     def download_gauss_pdf(self):
         self.analyzer.get_pdf(gauss=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
+        content = open(self.default_temp_dir+'grism.pdf', 'rb').read()  
         session.download("Gauss.pdf",content)
 
     def download_rectified(self):
@@ -186,7 +189,7 @@ class grism_web:
 
     def download_rectified_pdf(self):
         self.analyzer.get_pdf(rectified=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
+        content = open(self.default_temp_dir+'grism.pdf', 'rb').read()  
         session.download("Rectified.pdf",content)
 
     def download_2b2(self):
@@ -194,10 +197,10 @@ class grism_web:
 
     def download_2b2_pdf(self):
         self.analyzer.get_pdf(twoxtwo=True)
-        content = open('./temp/Grism.pdf', 'rb').read()  
+        content = open(self.default_temp_dir+'Grism.pdf', 'rb').read()  
         session.download("TwoByTwo.pdf",content)
 
-    def dowload_pngs(self):            
+    def download_pngs(self):            
         self.download_grism()
         self.download_strip()
         self.download_spectrum()
@@ -232,7 +235,7 @@ class grism_web:
         self.update_upper_wl(maxwave)
 
 
-        logo = open('./images/UILogoTransparent.png', 'rb').read()  
+        logo = open(self.default_image_dir+'UILogoTransparent.png', 'rb').read()  
         put_image(logo, height="20%", width="50%")     
         put_html("<h1>Grism Analysis Results</h1>")
         put_html(self.get_object_info_string())
@@ -316,8 +319,8 @@ class grism_web:
         
 
         
-        put_html("</hr><h4>Dowload All Images</h4>")
-        put_button("Dowload PDF", onclick=self.dowload_pdf);
-        put_button("Dowload PNGs of All Plots", onclick=self.dowload_pngs)
+        put_html("</hr><h4>Download All Images</h4>")
+        put_button("Download PDF", onclick=self.download_pdf);
+        put_button("Download PNGs of All Plots", onclick=self.download_pngs)
 
         session.hold()               

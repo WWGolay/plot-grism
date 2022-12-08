@@ -23,11 +23,12 @@ def main():
     home_path = os.path.dirname(os.path.abspath(__file__))+'/'
     cfg = setup_config.read(home_path+'config/plot-grism.cfg')
     default_temp_dir = home_path + cfg.get('default', 'default_temp_dir')
-    defaultDir = home_path + cfg.get('default', 'default_calibration_dir')
+    default_calibration_dir = home_path + cfg.get('default', 'default_calibration_dir')
+    default_image_dir = home_path + cfg.get('default', 'default_image_dir')
     day_iter = int(cfg.get('default', 'find_calib_by_date'))
     take_input = bool(cfg.get('default', 'take_input')=='True')
     path_to_fits = default_temp_dir
-    web_analyzer = grism_web()
+    web_analyzer = grism_web(default_temp_dir, default_image_dir)
     if take_input:
         fits_image, calibration, path = web_analyzer.get_fits() # Get initial fits image
         if path != "":
@@ -47,8 +48,8 @@ def main():
             # Iterate to find latest calib file in last n days
             if day_iter > 0:
                 for testDate in (startDate - timedelta(n) for n in range(day_iter)):
-                    if os.path.isfile(defaultDir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'):
-                        cal_file = defaultDir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'
+                    if os.path.isfile(default_calibration_dir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'):
+                        cal_file = default_calibration_dir+'grism_cal_6_'+testDate.strftime('%Y_%m_%d')+'.csv'
                         break
                     else: continue
                 else:
